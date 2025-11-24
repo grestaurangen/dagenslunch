@@ -41,7 +41,7 @@ a {
 }
 
 .site-logo {
-  height: 20px;
+  height: 40px;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
@@ -350,7 +350,7 @@ footer {
 
 @media (max-width: 640px) {
   .site-logo {
-    height: 16px;
+    height: 40px;
   }
 
   .branding {
