@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G Restaurangen | Veckans lunch</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="weekly">
+  <header class="site-header">
+    <div class="branding">
+      <h1>Veckans lunch</h1>
+      <p>En översikt över dagens luncher hela veckan.</p>
+    </div>
+    <nav class="header-actions">
+      <a class="text-link" href="index.html">Tillbaka till idag</a>
+      <a class="admin-link" href="admin.html" aria-label="Admin">
+        <span class="icon-lock" aria-hidden="true"></span>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero compact week-picker-row">
+      <div>
+        <p>Menyn uppdateras automatiskt när admin sparar veckoplanen.</p>
+      </div>
+      <label class="inline-label" for="weekly-week-picker">
+        <span>Visa vecka</span>
+        <select id="weekly-week-picker"></select>
+      </label>
+    </section>
+
+    <section id="weekly-section" class="week-grid">
+      <!-- JS injects cards for each weekday -->
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 G Restaurangen</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G Restaurangen | Dagens lunch</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="index">
+  <header class="site-header">
+    <div class="branding">
+      <h1>G Restaurangen</h1>
+      <p>Välkommen! Här hittar du dagens lunch.</p>
+    </div>
+    <nav class="header-actions">
+      <a class="text-link" href="weekly.html">Veckans lunch</a>
+      <a class="admin-link" href="admin.html" aria-label="Admin">
+        <span class="icon-lock" aria-hidden="true"></span>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Dagens lunch</h2>
+      <p>Menyn uppdateras av köket varje vecka. Saknas information? Titta igen lite senare.</p>
+    </section>
+
+    <section id="today-section" class="card">
+      <div id="today-container" class="menu-card placeholder">
+        <p>Hämtar dagens lunch...</p>
+      </div>
+    </section>
+
+    <section class="card info-card">
+      <div>
+        <h3>Se hela veckan</h3>
+        <p>Planera dina besök med översikten av veckans luncher.</p>
+      </div>
+      <a class="button" href="weekly.html">Öppna veckosidan</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 G Restaurangen</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

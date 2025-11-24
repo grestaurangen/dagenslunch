@@ -1,0 +1,33 @@
+[
+  {
+    "id": "flaskytterfile",
+    "title": "Fläskytterfilé",
+    "detail": "Svampsås och kokt potatis.",
+    "allergens": "Glutenfri, Laktosfri"
+  },
+  {
+    "id": "burritos",
+    "title": "Burritos",
+    "detail": "Köttfärs, lök och salsa.",
+    "allergens": "Laktosfri"
+  },
+  {
+    "id": "laxsida",
+    "title": "Ugnsbakad lax",
+    "detail": "Citron- och dillsås med rostad potatis.",
+    "allergens": "Fisk"
+  },
+  {
+    "id": "vegogryta",
+    "title": "Mustig vegogryta",
+    "detail": "Rostade rotfrukter och bönor i tomatsås.",
+    "allergens": "Inga deklarerade"
+  },
+  {
+    "id": "kycklingsallad",
+    "title": "Kycklingsallad",
+    "detail": "Matig sallad med örtvinägrett.",
+    "allergens": "Innehåller senap"
+  }
+]
+
