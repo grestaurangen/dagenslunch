@@ -256,6 +256,25 @@ textarea:focus {
   border-color: transparent;
 }
 
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+#admin-panel[hidden],
+#new-lunch[hidden] {
+  display: none !important;
+}
+
 .weekday-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

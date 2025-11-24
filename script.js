@@ -1,7 +1,8 @@
 const DATA_URL = "data/lunches.json";
 const STORAGE_KEYS = {
   selections: "grestaurangen_weekly_selections",
-  customLunches: "grestaurangen_custom_lunches"
+  customLunches: "grestaurangen_custom_lunches",
+  adminSession: "grestaurangen_admin_session"
 };
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const WEEKDAY_LABELS = {
@@ -255,6 +256,52 @@ async function renderWeeklyView() {
   }
 }
 
+function isAdminLoggedIn() {
+  return sessionStorage.getItem(STORAGE_KEYS.adminSession) === "true";
+}
+
+function setAdminLoggedIn(value) {
+  if (value) {
+    sessionStorage.setItem(STORAGE_KEYS.adminSession, "true");
+  } else {
+    sessionStorage.removeItem(STORAGE_KEYS.adminSession);
+  }
+}
+
+function disableAdminForms() {
+  const panel = document.getElementById("admin-panel");
+  const newLunchSection = document.getElementById("new-lunch");
+  const allInputs = document.querySelectorAll("#admin-panel input, #admin-panel select, #admin-panel textarea, #admin-panel button");
+  const allNewInputs = document.querySelectorAll("#new-lunch input, #new-lunch textarea, #new-lunch button");
+  
+  if (panel) {
+    allInputs.forEach(el => {
+      if (el.type !== "button" || el.id === "logout-btn") return;
+      el.disabled = true;
+    });
+  }
+  
+  if (newLunchSection) {
+    allNewInputs.forEach(el => {
+      if (el.type !== "submit") return;
+      el.disabled = true;
+    });
+  }
+}
+
+function enableAdminForms() {
+  const allInputs = document.querySelectorAll("#admin-panel input, #admin-panel select, #admin-panel textarea, #admin-panel button");
+  const allNewInputs = document.querySelectorAll("#new-lunch input, #new-lunch textarea, #new-lunch button");
+  
+  allInputs.forEach(el => {
+    el.disabled = false;
+  });
+  
+  allNewInputs.forEach(el => {
+    el.disabled = false;
+  });
+}
+
 async function initAdminView() {
   const loginSection = document.getElementById("admin-login");
   const panel = document.getElementById("admin-panel");
@@ -272,6 +319,14 @@ async function initAdminView() {
 
   if (!loginForm || !panel) return;
 
+  // Disable all admin forms initially
+  disableAdminForms();
+
+  // Check if already logged in from previous session
+  if (isAdminLoggedIn()) {
+    unlockAdmin();
+  }
+
   const lunches = await getAllLunches();
   populateSelectOptions(selects, lunches);
 
@@ -279,6 +334,7 @@ async function initAdminView() {
     event.preventDefault();
     const value = loginInput.value.trim();
     if (value === ADMIN_PIN) {
+      setAdminLoggedIn(true);
       unlockAdmin();
       loginInput.value = "";
       loginError.hidden = true;
@@ -288,9 +344,8 @@ async function initAdminView() {
   });
 
   logoutBtn?.addEventListener("click", () => {
-    panel.hidden = true;
-    newLunchSection.hidden = true;
-    loginSection.hidden = false;
+    setAdminLoggedIn(false);
+    lockAdmin();
   });
 
   populateWeekSelect(weekPicker);
@@ -299,6 +354,11 @@ async function initAdminView() {
 
   weekForm.addEventListener("submit", event => {
     event.preventDefault();
+    if (!isAdminLoggedIn()) {
+      alert("Du måste logga in för att spara ändringar.");
+      return;
+    }
+    
     const weekKey = toWeekKey(weekPicker.value);
     if (!weekKey) return;
 
@@ -320,11 +380,17 @@ async function initAdminView() {
   });
 
   weekPicker.addEventListener("change", () => {
+    if (!isAdminLoggedIn()) return;
     applySelectionsToForm(selects, weekPicker.value);
   });
 
   newLunchForm.addEventListener("submit", event => {
     event.preventDefault();
+    if (!isAdminLoggedIn()) {
+      alert("Du måste logga in för att lägga till nya luncher.");
+      return;
+    }
+    
     const title = document.getElementById("lunch-title").value.trim();
     const detail = document.getElementById("lunch-detail").value.trim();
     const allergens = document.getElementById("lunch-allergens").value.trim();
@@ -349,6 +415,15 @@ async function initAdminView() {
     loginSection.hidden = true;
     panel.hidden = false;
     newLunchSection.hidden = false;
+    enableAdminForms();
+  }
+
+  function lockAdmin() {
+    panel.hidden = true;
+    newLunchSection.hidden = true;
+    loginSection.hidden = false;
+    disableAdminForms();
+    loginInput.value = "";
   }
 }
 

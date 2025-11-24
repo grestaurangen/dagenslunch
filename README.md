@@ -27,8 +27,9 @@ Uppdatera filen manuellt om du vill distribuera nya standardrätter direkt i kod
 - Välj en vecka via rullistan (visar föregående veckor + endast en vecka framåt) och koppla sedan rätter till måndag–fredag.
 - Klicka på **Spara vecka** för att lagra valet lokalt. Både startsidan och veckosidan hämtar samma data.
 - Lägg till nya luncher via formuläret längst ned. Dessa blir valbara direkt.
+- Adminpanelen är nu skyddad: formulären är inaktiverade tills inloggning, och sessionen sparas i `sessionStorage` (återställs när fliken stängs).
 
-> **Obs:** Eftersom lösningen är helt statisk lagras alla ändringar i webbläsarens `localStorage`. Vid byte av dator/webbläsare behöver veckomenyn sättas på nytt eller så behöver du koppla in ett backend-API.
+> **Säkerhetsvarning:** Lösenordet finns fortfarande i klientkoden (`script.js`) och kan ses av någon som visar källkoden. För riktig säkerhet behöver du implementera serverless-funktioner (se nedan) eller ett riktigt backend-API. `api/`-mappen innehåller platshållare för Vercel serverless-funktioner som du kan implementera senare.
 
 ## Veckovy
 - På `weekly.html` kan besökare byta vecka med samma begränsade rullista (historik + en vecka framåt) för att förhandsgranska planerade menyer. Vy defaultar till nuvarande vecka.
