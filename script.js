@@ -21,14 +21,18 @@ document.addEventListener("DOMContentLoaded", () => {
   initPage();
 });
 
+const RESTAURANT_ADDRESS = "Rönnbäcken 12, 931 92 Skellefteå";
+
 async function initPage() {
   await ensureBaseLunches();
   const page = document.body.dataset.page || "index";
 
   if (page === "index") {
     renderTodayView();
+    initContactAndDirections();
   } else if (page === "weekly") {
     renderWeeklyView();
+    initContactAndDirections();
   } else if (page === "admin") {
     initAdminView();
   }
@@ -475,4 +479,68 @@ function setInitialWeekValue(select) {
   const value = select.querySelector(`option[value="${currentWeek}"]`) ? currentWeek : fallback;
   select.value = value;
   return value;
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function openDirections() {
+  const address = encodeURIComponent(RESTAURANT_ADDRESS);
+  let mapsUrl;
+  
+  if (isIOS()) {
+    // Apple Maps
+    mapsUrl = `maps://maps.apple.com/?daddr=${address}`;
+  } else {
+    // Google Maps
+    mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${address}`;
+  }
+  
+  window.open(mapsUrl, '_blank');
+}
+
+function initContactAndDirections() {
+  const contactBtn = document.getElementById('contact-btn');
+  const directionsBtn = document.getElementById('directions-btn');
+  const contactModal = document.getElementById('contact-modal');
+  const contactModalClose = document.getElementById('contact-modal-close');
+  
+  if (contactBtn && contactModal) {
+    contactBtn.addEventListener('click', () => {
+      contactModal.hidden = false;
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    });
+  }
+  
+  if (contactModalClose) {
+    contactModalClose.addEventListener('click', () => {
+      contactModal.hidden = true;
+      document.body.style.overflow = ''; // Restore scrolling
+    });
+  }
+  
+  // Close modal when clicking overlay
+  if (contactModal) {
+    const overlay = contactModal.querySelector('.modal-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        contactModal.hidden = true;
+        document.body.style.overflow = '';
+      });
+    }
+    
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !contactModal.hidden) {
+        contactModal.hidden = true;
+        document.body.style.overflow = '';
+      }
+    });
+  }
+  
+  if (directionsBtn) {
+    directionsBtn.addEventListener('click', openDirections);
+  }
 }

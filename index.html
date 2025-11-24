@@ -9,14 +9,19 @@
 <body data-page="index">
   <header class="site-header">
     <div class="branding">
-      <h1>G Restaurangen</h1>
+      <div class="branding-header">
+        <img src="assets/llogo.png" alt="G Restaurangen Logo" class="site-logo" />
+        <h1>Golf Restaurangen Skellefteå</h1>
+      </div>
       <p>Välkommen! Här hittar du dagens lunch.</p>
     </div>
     <nav class="header-actions">
-      <a class="text-link" href="weekly.html">Veckans lunch</a>
-      <a class="admin-link" href="admin.html" aria-label="Admin">
-        <span class="icon-lock" aria-hidden="true"></span>
-      </a>
+      <button class="header-icon-btn" id="contact-btn" aria-label="Kontakt information">
+        <span class="icon-contact" aria-hidden="true"></span>
+      </button>
+      <button class="header-icon-btn" id="directions-btn" aria-label="Hitta hit">
+        <span class="icon-directions" aria-hidden="true"></span>
+      </button>
     </nav>
   </header>
 
@@ -44,6 +49,22 @@
   <footer>
     <p>© 2025 G Restaurangen</p>
   </footer>
+
+  <!-- Contact Modal -->
+  <div id="contact-modal" class="modal" hidden>
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Kontakt information</h2>
+        <button class="modal-close" id="contact-modal-close" aria-label="Stäng">×</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>E-post:</strong> <a href="mailto:info@grestaurangen.se">info@grestaurangen.se</a></p>
+        <p><strong>Telefon:</strong> <a href="tel:+46705919804">070-591 9804</a></p>
+        <p><strong>Adress:</strong> Rönnbäcken 12, 931 92 Skellefteå</p>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

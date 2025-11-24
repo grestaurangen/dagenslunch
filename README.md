@@ -5,7 +5,7 @@ En enkel statisk webbapp som visar dagens lunch och en hel veckovy, samt ett adm
 ## Struktur
 - `index.html` – Publik startsida med dagens lunch.
 - `weekly.html` – Publik vy över hela veckan (med veckoväljare).
-- `admin.html` – Enkel adminpanel (lösenordsskyddad på klientsidan).
+- `x7k9m2p4.html` – Enkel adminpanel (lösenordsskyddad på klientsidan).
 - `style.css` – Gemensamma stilmallar för alla sidor.
 - `script.js` – All logik för att läsa lunchlistan, visa menyer och hantera adminflödet.
 - `data/lunches.json` – Grunddatan med titlar, detaljer och allergener.

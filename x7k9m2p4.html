@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G Restaurangen | Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="admin">
+  <header class="site-header">
+    <div class="branding">
+      <div class="branding-header">
+        <img src="assets/llogo.png" alt="G Restaurangen Logo" class="site-logo" />
+        <h1>Administrera veckans lunch</h1>
+      </div>
+      <p>Logga in för att välja dagens luncher och lägga till nya rätter.</p>
+    </div>
+    <nav class="header-actions">
+      <a class="text-link" href="index.html">Publik sida</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="admin-login" class="card">
+      <h2>Admininloggning</h2>
+      <p>Ange veckolösenordet för att göra ändringar.</p>
+      <form id="login-form" class="stacked-form">
+        <label for="admin-pass">Lösenord</label>
+        <input type="password" id="admin-pass" autocomplete="current-password" required />
+        <button type="submit" class="button primary">Logga in</button>
+        <p class="helper-text">Standardlösenord: <code>grestaurang</code> (byt i script.js).</p>
+        <p id="login-error" class="error-text" role="alert" hidden>Fel lösenord, försök igen.</p>
+      </form>
+    </section>
+
+    <section id="admin-panel" class="card admin-panel" hidden>
+      <div class="panel-header">
+        <div>
+          <h2>Veckoplanering</h2>
+          <p>Välj vecka och koppla luncher till måndag–fredag.</p>
+        </div>
+        <button id="logout-btn" class="button ghost">Logga ut</button>
+      </div>
+
+      <form id="week-form" class="stacked-form">
+        <label for="week-picker">Veckonummer</label>
+        <select id="week-picker" required></select>
+
+        <div class="weekday-grid">
+          <div class="weekday-field">
+            <label for="monday-select">Måndag</label>
+            <select id="monday-select" data-day="monday"></select>
+          </div>
+          <div class="weekday-field">
+            <label for="tuesday-select">Tisdag</label>
+            <select id="tuesday-select" data-day="tuesday"></select>
+          </div>
+          <div class="weekday-field">
+            <label for="wednesday-select">Onsdag</label>
+            <select id="wednesday-select" data-day="wednesday"></select>
+          </div>
+          <div class="weekday-field">
+            <label for="thursday-select">Torsdag</label>
+            <select id="thursday-select" data-day="thursday"></select>
+          </div>
+          <div class="weekday-field">
+            <label for="friday-select">Fredag</label>
+            <select id="friday-select" data-day="friday"></select>
+          </div>
+        </div>
+
+        <button type="submit" class="button primary">Spara vecka</button>
+        <p id="week-feedback" class="success-text" hidden>Veckans meny sparades!</p>
+      </form>
+    </section>
+
+    <section id="new-lunch" class="card" hidden>
+      <h2>Lägg till ny lunch</h2>
+      <p>Ny rätter blir tillgängliga i listorna ovan direkt.</p>
+      <form id="new-lunch-form" class="stacked-form">
+        <label for="lunch-title">Titel</label>
+        <input id="lunch-title" required />
+
+        <label for="lunch-detail">Detaljer</label>
+        <textarea id="lunch-detail" rows="2" required></textarea>
+
+        <label for="lunch-allergens">Allergen info</label>
+        <input id="lunch-allergens" placeholder="t.ex. Glutenfri, Laktosfri" />
+
+        <button type="submit" class="button secondary">Lägg till lunch</button>
+        <p id="new-lunch-feedback" class="success-text" hidden>Ny lunch sparad!</p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 G Restaurangen</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
