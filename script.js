@@ -150,19 +150,23 @@ function formatWeekLabel(date) {
 
 function buildWeekOptions() {
   const today = new Date();
-  const start = new Date(today);
-  start.setDate(start.getDate() - WEEK_HISTORY_SPAN * 7);
-  const end = new Date(today);
-  end.setDate(end.getDate() + 7); // endast en vecka framåt
+  const currentWeek = new Date(today);
+  const pastWeek = new Date(today);
+  pastWeek.setDate(today.getDate() - 7);
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
 
   const options = [];
   const seen = new Set();
-  for (let cursor = new Date(end); cursor >= start; cursor.setDate(cursor.getDate() - 7)) {
-    const value = formatWeekInputValue(cursor);
-    if (seen.has(value)) continue;
-    options.push({ value, label: formatWeekLabel(cursor) });
-    seen.add(value);
-  }
+  
+  // Add past week, current week, and next week
+  [pastWeek, currentWeek, nextWeek].forEach(date => {
+    const value = formatWeekInputValue(date);
+    if (!seen.has(value)) {
+      seen.add(value);
+      options.push({ value, label: formatWeekLabel(date) });
+    }
+  });
 
   options.sort((a, b) => (a.value < b.value ? 1 : -1)); // senaste överst
   return options;
