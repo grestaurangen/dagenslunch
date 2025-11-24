@@ -34,17 +34,22 @@ a {
   gap: 1rem;
 }
 
-.branding-header {
+.branding {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 
 .site-logo {
-  height: 50px;
+  height: 20px;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.branding-text {
+  flex: 1;
 }
 
 .branding h1 {
@@ -345,10 +350,10 @@ footer {
 
 @media (max-width: 640px) {
   .site-logo {
-    height: 40px;
+    height: 16px;
   }
 
-  .branding-header {
+  .branding {
     gap: 0.75rem;
   }
 
