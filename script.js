@@ -12,7 +12,7 @@ const WEEKDAY_LABELS = {
   thursday: "Torsdag",
   friday: "Fredag"
 };
-const ADMIN_PIN = "grestaurang";
+const ADMIN_PIN = "verran94";
 const WEEK_HISTORY_SPAN = 52; // antal veckor bakåt i listan
 
 let baseLunches = [];
