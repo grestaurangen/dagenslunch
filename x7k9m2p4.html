@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>G Restaurangen | Admin</title>
+  <title>Golf Restaurangen Skellefteå | Admin</title>
   <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body data-page="admin">
   <header class="site-header">
     <div class="branding">
-      <img src="assets/llogo.png" alt="G Restaurangen Logo" class="site-logo" />
+      <img src="assets/llogo.png" alt="Golf Restaurangen Skellefteå Logo" class="site-logo" />
       <div class="branding-text">
         <h1>Administrera veckans lunch</h1>
         <p>Logga in för att välja dagens luncher och lägga till nya rätter.</p>
@@ -74,6 +74,28 @@
       </form>
     </section>
 
+    <section id="closed-override" class="card" hidden>
+      <h2>Stängd / Meddelande</h2>
+      <p>När aktiverat, visar detta meddelande istället för dagens lunch på startsidan.</p>
+      <form id="closed-form" class="stacked-form">
+        <label class="checkbox-label">
+          <input type="checkbox" id="closed-persistent-checkbox" />
+          <span>Stängt tillsvidare</span>
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="closed-checkbox" />
+          <span>Stängd idag</span>
+        </label>
+
+        <label for="closed-message">Meddelande</label>
+        <textarea id="closed-message" rows="3" placeholder="t.ex. Stängt idag på grund av..."></textarea>
+
+        <button type="submit" class="button secondary">Spara meddelande</button>
+        <p id="closed-feedback" class="success-text" hidden>Meddelande sparad!</p>
+      </form>
+    </section>
+
     <section id="new-lunch" class="card" hidden>
       <h2>Lägg till ny lunch</h2>
       <p>Ny rätter blir tillgängliga i listorna ovan direkt.</p>
@@ -94,10 +116,10 @@
   </main>
 
   <footer>
-    <p>© 2025 G Restaurangen</p>
+    <p>© 2025 Golf Restaurangen Skellefteå</p>
   </footer>
 
-  <script src="script.js?v=2"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>
 

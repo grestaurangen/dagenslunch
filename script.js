@@ -2,7 +2,9 @@ const DATA_URL = "data/lunches.json";
 const STORAGE_KEYS = {
   selections: "grestaurangen_weekly_selections",
   customLunches: "grestaurangen_custom_lunches",
-  adminSession: "grestaurangen_admin_session"
+  adminSession: "grestaurangen_admin_session",
+  closedMessages: "grestaurangen_closed_messages",
+  closedPersistent: "grestaurangen_closed_persistent"
 };
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 const WEEKDAY_LABELS = {
@@ -174,7 +176,7 @@ function buildWeekOptions() {
 
 function renderLunch(container, lunch) {
   container.classList.remove("placeholder");
-  container.innerHTML = `
+container.innerHTML = `
     <h3>${lunch.title}</h3>
     <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
     <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
@@ -186,9 +188,69 @@ function renderPlaceholder(container, message) {
   container.innerHTML = `<p>${message}</p>`;
 }
 
+function getTodayDateKey() {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+}
+
+function getClosedMessages() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.closedMessages);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveClosedMessages(messages) {
+  localStorage.setItem(STORAGE_KEYS.closedMessages, JSON.stringify(messages));
+}
+
+function getClosedMessageForToday() {
+  const todayKey = getTodayDateKey();
+  const messages = getClosedMessages();
+  return messages[todayKey] || null;
+}
+
+function getPersistentClosed() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.closedPersistent);
+    if (!stored) return null;
+    const data = JSON.parse(stored);
+    return data.isClosed ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistentClosed(isClosed, message) {
+  if (isClosed) {
+    localStorage.setItem(STORAGE_KEYS.closedPersistent, JSON.stringify({
+      isClosed: true,
+      message: message || ""
+    }));
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.closedPersistent);
+  }
+}
+
 async function renderTodayView() {
   const container = document.getElementById("today-container");
   if (!container) return;
+
+  // Check for persistent closed status first - this overrides everything
+  const persistentClosed = getPersistentClosed();
+  if (persistentClosed && persistentClosed.isClosed) {
+    renderPlaceholder(container, persistentClosed.message || "Restaurangen är stängd tillsvidare.");
+    return;
+  }
+
+  // Check for today's closed message - this overrides lunch but not persistent
+  const closedMessage = getClosedMessageForToday();
+  if (closedMessage && closedMessage.isClosed) {
+    renderPlaceholder(container, closedMessage.message || "Restaurangen är stängd idag.");
+    return;
+  }
 
   const dayKey = getTodayDayKey();
   if (!dayKey) {
@@ -279,8 +341,10 @@ function setAdminLoggedIn(value) {
 function disableAdminForms() {
   const panel = document.getElementById("admin-panel");
   const newLunchSection = document.getElementById("new-lunch");
+  const closedSection = document.getElementById("closed-override");
   const allInputs = document.querySelectorAll("#admin-panel input, #admin-panel select, #admin-panel textarea, #admin-panel button");
   const allNewInputs = document.querySelectorAll("#new-lunch input, #new-lunch textarea, #new-lunch button");
+  const allClosedInputs = document.querySelectorAll("#closed-override input, #closed-override textarea, #closed-override button");
   
   if (panel) {
     allInputs.forEach(el => {
@@ -295,11 +359,19 @@ function disableAdminForms() {
       el.disabled = true;
     });
   }
+
+  if (closedSection) {
+    allClosedInputs.forEach(el => {
+      if (el.type !== "submit") return;
+      el.disabled = true;
+    });
+  }
 }
 
 function enableAdminForms() {
   const allInputs = document.querySelectorAll("#admin-panel input, #admin-panel select, #admin-panel textarea, #admin-panel button");
   const allNewInputs = document.querySelectorAll("#new-lunch input, #new-lunch textarea, #new-lunch button");
+  const allClosedInputs = document.querySelectorAll("#closed-override input, #closed-override textarea, #closed-override button");
   
   allInputs.forEach(el => {
     el.disabled = false;
@@ -308,12 +380,17 @@ function enableAdminForms() {
   allNewInputs.forEach(el => {
     el.disabled = false;
   });
+
+  allClosedInputs.forEach(el => {
+    el.disabled = false;
+  });
 }
 
 async function initAdminView() {
   const loginSection = document.getElementById("admin-login");
   const panel = document.getElementById("admin-panel");
   const newLunchSection = document.getElementById("new-lunch");
+  const closedSection = document.getElementById("closed-override");
   const loginForm = document.getElementById("login-form");
   const loginInput = document.getElementById("admin-pass");
   const loginError = document.getElementById("login-error");
@@ -323,6 +400,11 @@ async function initAdminView() {
   const weekFeedback = document.getElementById("week-feedback");
   const newLunchForm = document.getElementById("new-lunch-form");
   const newLunchFeedback = document.getElementById("new-lunch-feedback");
+  const closedForm = document.getElementById("closed-form");
+  const closedCheckbox = document.getElementById("closed-checkbox");
+  const closedPersistentCheckbox = document.getElementById("closed-persistent-checkbox");
+  const closedMessage = document.getElementById("closed-message");
+  const closedFeedback = document.getElementById("closed-feedback");
   const selects = Array.from(document.querySelectorAll("select[data-day]"));
 
   if (!loginForm || !panel) return;
@@ -334,6 +416,31 @@ async function initAdminView() {
   if (isAdminLoggedIn()) {
     unlockAdmin();
   }
+
+  // Load current closed state (persistent first, then today)
+  const persistentClosed = getPersistentClosed();
+  if (persistentClosed) {
+    closedPersistentCheckbox.checked = true;
+    closedMessage.value = persistentClosed.message || "";
+    // If persistent is active, disable today checkbox
+    closedCheckbox.disabled = true;
+  } else {
+    const todayClosed = getClosedMessageForToday();
+    if (todayClosed) {
+      closedCheckbox.checked = todayClosed.isClosed;
+      closedMessage.value = todayClosed.message || "";
+    }
+  }
+
+  // Handle persistent checkbox change - enable/disable today checkbox
+  closedPersistentCheckbox.addEventListener("change", () => {
+    if (closedPersistentCheckbox.checked) {
+      closedCheckbox.checked = false;
+      closedCheckbox.disabled = true;
+    } else {
+      closedCheckbox.disabled = false;
+    }
+  });
 
   const lunches = await getAllLunches();
   populateSelectOptions(selects, lunches);
@@ -419,16 +526,60 @@ async function initAdminView() {
     newLunchForm.reset();
   });
 
+  closedForm.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!isAdminLoggedIn()) {
+      alert("Du måste logga in för att spara meddelandet.");
+      return;
+    }
+
+    const messageText = closedMessage.value.trim();
+    const isPersistent = closedPersistentCheckbox.checked;
+    const isTodayClosed = closedCheckbox.checked && !isPersistent;
+
+    if (isPersistent) {
+      // Persistent closed - save and it will apply to all days
+      savePersistentClosed(true, messageText);
+      // Clear today's closed status since persistent overrides it
+      const todayKey = getTodayDateKey();
+      const messages = getClosedMessages();
+      delete messages[todayKey];
+      saveClosedMessages(messages);
+      showFeedback(closedFeedback);
+    } else if (isTodayClosed) {
+      // Today only closed
+      const todayKey = getTodayDateKey();
+      const messages = getClosedMessages();
+      messages[todayKey] = {
+        isClosed: true,
+        message: messageText
+      };
+      saveClosedMessages(messages);
+      showFeedback(closedFeedback);
+    } else {
+      // Not closed - remove both persistent and today
+      savePersistentClosed(false, "");
+      const todayKey = getTodayDateKey();
+      const messages = getClosedMessages();
+      delete messages[todayKey];
+      saveClosedMessages(messages);
+      closedMessage.value = "";
+      showFeedback(closedFeedback);
+    }
+  });
+
   function unlockAdmin() {
     loginSection.hidden = true;
     panel.hidden = false;
     newLunchSection.hidden = false;
+    closedSection.hidden = false;
     enableAdminForms();
   }
 
   function lockAdmin() {
     panel.hidden = true;
     newLunchSection.hidden = true;
+    closedSection.hidden = true;
     loginSection.hidden = false;
     disableAdminForms();
     loginInput.value = "";
