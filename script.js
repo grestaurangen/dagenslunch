@@ -73,7 +73,8 @@ function normalizeLunch(lunch) {
     title: lunch.title || "Okänd rätt",
     detail: lunch.detail || "",
     allergens: lunch.allergens || "",
-    showSeniorPrice: lunch.showSeniorPrice !== false
+    showSeniorPrice: lunch.showSeniorPrice !== false,
+    instagramUrl: lunch.instagramUrl || ""
   };
 }
 
@@ -261,6 +262,9 @@ async function renderTodayView() {
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
     renderLunch(container, lunch, pricing);
+    if (lunch.instagramUrl) {
+      loadInstagramPreviewAsync(container, lunch.instagramUrl);
+    }
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -310,6 +314,9 @@ async function renderWeeklyView() {
           const lunch = lunches.find(item => item.id === lunchId);
           if (lunch) {
             content.innerHTML = buildLunchMarkup(lunch, pricing);
+            if (lunch.instagramUrl) {
+              loadInstagramPreviewAsync(content, lunch.instagramUrl);
+            }
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -350,6 +357,12 @@ async function initAdminView() {
   const editFeedback = document.getElementById("edit-lunch-feedback");
   const editSaveBtn = document.getElementById("edit-save-btn");
   const editDeleteBtn = document.getElementById("edit-delete-btn");
+  const editHasInstagram = document.getElementById("edit-lunch-has-instagram");
+  const editInstagramUrl = document.getElementById("edit-lunch-instagram-url");
+  const editInstagramLabel = document.getElementById("edit-lunch-instagram-label");
+  const newLunchHasInstagram = document.getElementById("lunch-has-instagram");
+  const newLunchInstagramUrl = document.getElementById("lunch-instagram-url");
+  const newLunchInstagramLabel = document.getElementById("lunch-instagram-label");
   const pricingSection = document.getElementById("pricing-settings");
   const pricingForm = document.getElementById("pricing-form");
   const pricingRegularInput = document.getElementById("pricing-regular");
@@ -394,9 +407,38 @@ async function initAdminView() {
       editSeniorToggle.checked = true;
       editSeniorToggle.disabled = true;
     }
+    if (editHasInstagram) {
+      editHasInstagram.checked = false;
+      editHasInstagram.disabled = true;
+    }
+    if (editInstagramUrl) {
+      editInstagramUrl.value = "";
+      editInstagramUrl.disabled = true;
+    }
+    if (editInstagramLabel) {
+      editInstagramLabel.style.display = "none";
+    }
   };
 
   resetEditForm("Välj en lunch för att redigera eller ta bort den.");
+
+  if (editHasInstagram && editInstagramLabel) {
+    editHasInstagram.addEventListener("change", () => {
+      editInstagramLabel.style.display = editHasInstagram.checked ? "flex" : "none";
+      if (!editHasInstagram.checked && editInstagramUrl) {
+        editInstagramUrl.value = "";
+      }
+    });
+  }
+
+  if (newLunchHasInstagram && newLunchInstagramLabel) {
+    newLunchHasInstagram.addEventListener("change", () => {
+      newLunchInstagramLabel.style.display = newLunchHasInstagram.checked ? "flex" : "none";
+      if (!newLunchHasInstagram.checked && newLunchInstagramUrl) {
+        newLunchInstagramUrl.value = "";
+      }
+    });
+  }
 
   closedPersistentCheckbox.addEventListener("change", () => {
     if (closedPersistentCheckbox.checked) {
@@ -457,6 +499,11 @@ async function initAdminView() {
     if (editTitle) editTitle.value = selected.title || "";
     if (editDetail) editDetail.value = selected.detail || "";
     if (editAllergens) editAllergens.value = selected.allergens || "";
+    
+    const hasInstagramUrl = Boolean(selected.instagramUrl?.trim());
+    if (editHasInstagram) editHasInstagram.checked = hasInstagramUrl;
+    if (editInstagramUrl) editInstagramUrl.value = selected.instagramUrl || "";
+    if (editInstagramLabel) editInstagramLabel.style.display = hasInstagramUrl ? "flex" : "none";
 
     const editable = Boolean(selected.collection);
     if (editHelper) {
@@ -472,6 +519,8 @@ async function initAdminView() {
       editSeniorToggle.checked = selected.showSeniorPrice !== false;
       editSeniorToggle.disabled = !editable;
     }
+    if (editHasInstagram) editHasInstagram.disabled = !editable;
+    if (editInstagramUrl) editInstagramUrl.disabled = !editable;
   });
 
   editForm?.addEventListener("submit", async event => {
@@ -485,11 +534,16 @@ async function initAdminView() {
       return;
     }
 
+    const instagramUrl = editHasInstagram?.checked && editInstagramUrl?.value.trim() 
+      ? editInstagramUrl.value.trim() 
+      : "";
+    
     const payload = {
       title: editTitle.value.trim(),
       detail: editDetail.value.trim(),
       allergens: editAllergens.value.trim(),
       showSeniorPrice: editSeniorToggle ? editSeniorToggle.checked : true,
+      instagramUrl: instagramUrl,
       updatedAt: serverTimestamp()
     };
 
@@ -599,6 +653,9 @@ async function initAdminView() {
     const detail = document.getElementById("lunch-detail").value.trim();
     const allergens = document.getElementById("lunch-allergens").value.trim();
     const showSeniorPrice = newLunchSeniorToggle ? newLunchSeniorToggle.checked : true;
+    const instagramUrl = newLunchHasInstagram?.checked && newLunchInstagramUrl?.value.trim()
+      ? newLunchInstagramUrl.value.trim()
+      : "";
     if (!title || !detail) return;
 
     const newEntry = normalizeLunch({
@@ -606,7 +663,8 @@ async function initAdminView() {
       title,
       detail,
       allergens,
-      showSeniorPrice
+      showSeniorPrice,
+      instagramUrl
     });
 
     try {
@@ -615,6 +673,7 @@ async function initAdminView() {
         detail: newEntry.detail,
         allergens: newEntry.allergens,
         showSeniorPrice: newEntry.showSeniorPrice,
+        instagramUrl: newEntry.instagramUrl,
         createdAt: serverTimestamp()
       });
       lunchesCache = null;
@@ -622,6 +681,8 @@ async function initAdminView() {
       await populateEditSelect(editSelect, true);
       newLunchForm.reset();
       if (newLunchSeniorToggle) newLunchSeniorToggle.checked = true;
+      if (newLunchHasInstagram) newLunchHasInstagram.checked = false;
+      if (newLunchInstagramLabel) newLunchInstagramLabel.style.display = "none";
       showFeedback(newLunchFeedback);
     } catch (error) {
       console.error("Kunde inte lägga till lunch:", error);
@@ -689,6 +750,40 @@ function renderPlaceholder(container, message) {
   container.innerHTML = `<p>${message}</p>`;
 }
 
+function getInstagramImageUrl(instagramUrl) {
+  if (!instagramUrl) return null;
+  
+  try {
+    const urlObj = new URL(instagramUrl);
+    const pathMatch = urlObj.pathname.match(/\/p\/([A-Za-z0-9_-]+)/);
+    if (pathMatch && pathMatch[1]) {
+      const postShortcode = pathMatch[1];
+      return `https://www.instagram.com/p/${postShortcode}/media/?size=m`;
+    }
+  } catch (error) {
+    console.warn("Kunde inte extrahera bild från Instagram-URL:", error);
+  }
+  return null;
+}
+
+async function loadInstagramPreviewAsync(container, instagramUrl) {
+  const imgElement = container?.querySelector(".menu-image img");
+  if (!imgElement) return;
+
+  try {
+    const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(instagramUrl)}`;
+    const response = await fetch(oembedUrl);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.thumbnail_url) {
+        imgElement.src = data.thumbnail_url;
+      }
+    }
+  } catch (error) {
+    console.warn("Kunde inte hämta Instagram-förhandsvisning via oEmbed:", error);
+  }
+}
+
 function buildLunchMarkup(lunch, pricing) {
   const regularPrice = pricing?.regularPrice?.trim();
   const seniorPrice = pricing?.seniorPrice?.trim();
@@ -700,9 +795,20 @@ function buildLunchMarkup(lunch, pricing) {
       </div>`
     : "";
 
+  const instagramUrl = lunch.instagramUrl?.trim();
+  const instagramImageUrl = instagramUrl ? getInstagramImageUrl(instagramUrl) : null;
+  const instagramPreview = instagramUrl
+    ? `<div class="menu-image">
+        <a href="${instagramUrl}" target="_blank" rel="noopener" aria-label="Se inlägget på Instagram">
+          <img src="${instagramImageUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="300"%3E%3Crect fill="%23f3f4f6" width="300" height="300"/%3E%3C/svg%3E'}" alt="${lunch.title}" loading="lazy" />
+        </a>
+      </div>`
+    : "";
+
   return `
     <div class="menu-row">
       <div class="menu-info">
+        ${instagramPreview}
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
         <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
