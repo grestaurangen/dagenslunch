@@ -695,7 +695,7 @@ function buildLunchMarkup(lunch, pricing) {
   const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
   const priceHtml = regularPrice
     ? `<div class="menu-price">
-        <span class="price"><span class="price-label">Pris:</span> ${regularPrice}</span>
+        <span class="price"><span class="price-label"> </span> ${regularPrice}</span>
         ${showSenior ? `<span class="senior"><span class="price-label">Pensionärspris:</span> ${seniorPrice}</span>` : ""}
       </div>`
     : "";
@@ -705,7 +705,7 @@ function buildLunchMarkup(lunch, pricing) {
       <div class="menu-info">
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
+        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
       </div>
       ${priceHtml}
     </div>
