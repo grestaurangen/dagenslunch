@@ -78,6 +78,25 @@
       </form>
     </section>
 
+    <section id="pricing-settings" class="card" hidden>
+      <h2>Priser</h2>
+      <p>Ange gällande pris för lunch samt pensionärspris. Gäller för alla rätter.</p>
+      <form id="pricing-form" class="stacked-form">
+        <label for="pricing-regular">
+          Ordinarie pris
+          <input id="pricing-regular" type="text" placeholder="t.ex. 129 kr" />
+        </label>
+
+        <label for="pricing-senior">
+          Pensionärspris
+          <input id="pricing-senior" type="text" placeholder="t.ex. 109 kr" />
+        </label>
+
+        <button type="submit" class="button secondary">Spara priser</button>
+        <p id="pricing-feedback" class="success-text" hidden>Priser sparade!</p>
+      </form>
+    </section>
+
     <section id="edit-lunch" class="card" hidden>
       <h2>Redigera befintlig lunch</h2>
       <p>Välj en lunch från listan för att uppdatera eller ta bort den.</p>
@@ -96,6 +115,11 @@
 
         <label for="edit-lunch-allergens">Allergen info</label>
         <input id="edit-lunch-allergens" placeholder="t.ex. Glutenfri, Laktosfri" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="edit-lunch-senior-visible" />
+          <span>Visa pensionärspris för denna rätt</span>
+        </label>
 
         <div class="button-row">
           <button type="submit" id="edit-save-btn" class="button secondary">Spara ändringar</button>
@@ -139,6 +163,11 @@
 
         <label for="lunch-allergens">Allergen info</label>
         <input id="lunch-allergens" placeholder="t.ex. Glutenfri, Laktosfri" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="lunch-senior-visible" checked />
+          <span>Visa pensionärspris för denna rätt</span>
+        </label>
 
         <button type="submit" class="button secondary">Lägg till lunch</button>
         <p id="new-lunch-feedback" class="success-text" hidden>Ny lunch sparad!</p>

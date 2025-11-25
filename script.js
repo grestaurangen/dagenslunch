@@ -36,6 +36,7 @@ let lunchesCache = null;
 const selectionCache = {};
 let persistentClosedCache;
 let todayClosedCache;
+let pricingCache;
 
 document.addEventListener("DOMContentLoaded", () => {
   initPage();
@@ -71,7 +72,8 @@ function normalizeLunch(lunch) {
     id,
     title: lunch.title || "Okänd rätt",
     detail: lunch.detail || "",
-    allergens: lunch.allergens || ""
+    allergens: lunch.allergens || "",
+    showSeniorPrice: lunch.showSeniorPrice !== false
   };
 }
 
@@ -202,6 +204,28 @@ async function clearTodayClosed() {
   todayClosedCache = null;
 }
 
+async function fetchPricing(force = false) {
+  if (!force && pricingCache !== undefined) return pricingCache;
+  try {
+    const snap = await getDoc(doc(db, "flags", "pricing"));
+    pricingCache = snap.exists() ? snap.data() : null;
+    return pricingCache;
+  } catch (error) {
+    console.error("Kunde inte läsa prisinformation:", error);
+    pricingCache = null;
+    return null;
+  }
+}
+
+async function savePricing(regularPrice, seniorPrice) {
+  await setDoc(doc(db, "flags", "pricing"), {
+    regularPrice: regularPrice || "",
+    seniorPrice: seniorPrice || "",
+    updatedAt: serverTimestamp()
+  });
+  pricingCache = { regularPrice: regularPrice || "", seniorPrice: seniorPrice || "" };
+}
+
 async function renderTodayView() {
   const container = document.getElementById("today-container");
   if (!container) return;
@@ -224,7 +248,7 @@ async function renderTodayView() {
     return;
   }
 
-  const lunches = await getAllLunches();
+  const [lunches, pricing] = await Promise.all([getAllLunches(), fetchPricing()]);
   const weekKey = formatWeekInputValue(new Date());
   const selections = await fetchWeekSelection(weekKey);
   const lunchId = selections?.[dayKey];
@@ -236,7 +260,7 @@ async function renderTodayView() {
 
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
-    renderLunch(container, lunch);
+    renderLunch(container, lunch, pricing);
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -257,11 +281,12 @@ async function renderWeeklyView() {
 
   async function drawWeek(weekValue) {
     const weekKey = toWeekKey(weekValue);
-    const lunches = await getAllLunches();
-    const selections = await fetchWeekSelection(weekKey);
-    const [persistentClosed, todayClosed] = await Promise.all([
+    const [lunches, selections, persistentClosed, todayClosed, pricing] = await Promise.all([
+      getAllLunches(),
+      fetchWeekSelection(weekKey),
       fetchPersistentClosed(),
-      fetchTodayClosed()
+      fetchTodayClosed(),
+      fetchPricing()
     ]);
     const currentWeekValue = formatWeekInputValue(new Date());
     const weekIsCurrent = weekValue === currentWeekValue;
@@ -284,11 +309,7 @@ async function renderWeeklyView() {
         if (lunchId) {
           const lunch = lunches.find(item => item.id === lunchId);
           if (lunch) {
-            content.innerHTML = `
-              <p class="menu-detail"><strong>${lunch.title}</strong></p>
-              <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-              <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
-            `;
+            content.innerHTML = buildLunchMarkup(lunch, pricing);
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -317,16 +338,23 @@ async function initAdminView() {
   const newLunchSection = document.getElementById("new-lunch");
   const newLunchForm = document.getElementById("new-lunch-form");
   const newLunchFeedback = document.getElementById("new-lunch-feedback");
+  const newLunchSeniorToggle = document.getElementById("lunch-senior-visible");
   const editSection = document.getElementById("edit-lunch");
   const editForm = document.getElementById("edit-lunch-form");
   const editSelect = document.getElementById("edit-lunch-select");
   const editTitle = document.getElementById("edit-lunch-title");
   const editDetail = document.getElementById("edit-lunch-detail");
   const editAllergens = document.getElementById("edit-lunch-allergens");
+  const editSeniorToggle = document.getElementById("edit-lunch-senior-visible");
   const editHelper = document.getElementById("edit-lunch-helper");
   const editFeedback = document.getElementById("edit-lunch-feedback");
   const editSaveBtn = document.getElementById("edit-save-btn");
   const editDeleteBtn = document.getElementById("edit-delete-btn");
+  const pricingSection = document.getElementById("pricing-settings");
+  const pricingForm = document.getElementById("pricing-form");
+  const pricingRegularInput = document.getElementById("pricing-regular");
+  const pricingSeniorInput = document.getElementById("pricing-senior");
+  const pricingFeedback = document.getElementById("pricing-feedback");
   const closedSection = document.getElementById("closed-override");
   const closedForm = document.getElementById("closed-form");
   const closedCheckbox = document.getElementById("closed-checkbox");
@@ -344,6 +372,13 @@ async function initAdminView() {
   await populateSelectOptions(selects);
   await applySelectionsToForm(selects, initialWeek);
   await populateEditSelect(editSelect);
+  const populatePricingForm = async () => {
+    if (!pricingForm) return;
+    const pricing = await fetchPricing();
+    if (pricingRegularInput) pricingRegularInput.value = pricing?.regularPrice || "";
+    if (pricingSeniorInput) pricingSeniorInput.value = pricing?.seniorPrice || "";
+  };
+  await populatePricingForm();
 
   const resetEditForm = helperMessage => {
     if (editForm) {
@@ -355,6 +390,10 @@ async function initAdminView() {
     }
     if (editSaveBtn) editSaveBtn.disabled = true;
     if (editDeleteBtn) editDeleteBtn.disabled = true;
+    if (editSeniorToggle) {
+      editSeniorToggle.checked = true;
+      editSeniorToggle.disabled = true;
+    }
   };
 
   resetEditForm("Välj en lunch för att redigera eller ta bort den.");
@@ -385,6 +424,23 @@ async function initAdminView() {
     signOut(auth).catch(error => console.error("Kunde inte logga ut:", error));
   });
 
+  pricingForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!auth.currentUser) {
+      alert("Du måste logga in för att spara priser.");
+      return;
+    }
+    const regularValue = pricingRegularInput?.value.trim() || "";
+    const seniorValue = pricingSeniorInput?.value.trim() || "";
+    try {
+      await savePricing(regularValue, seniorValue);
+      showFeedback(pricingFeedback);
+    } catch (error) {
+      console.error("Kunde inte spara priser:", error);
+      alert("Det gick inte att spara priserna. Försök igen.");
+    }
+  });
+
   editSelect?.addEventListener("change", async () => {
     if (!editSelect.value) {
       resetEditForm("Välj en lunch för att redigera eller ta bort den.");
@@ -412,6 +468,10 @@ async function initAdminView() {
     }
     if (editSaveBtn) editSaveBtn.disabled = !editable;
     if (editDeleteBtn) editDeleteBtn.disabled = !editable;
+    if (editSeniorToggle) {
+      editSeniorToggle.checked = selected.showSeniorPrice !== false;
+      editSeniorToggle.disabled = !editable;
+    }
   });
 
   editForm?.addEventListener("submit", async event => {
@@ -429,6 +489,7 @@ async function initAdminView() {
       title: editTitle.value.trim(),
       detail: editDetail.value.trim(),
       allergens: editAllergens.value.trim(),
+      showSeniorPrice: editSeniorToggle ? editSeniorToggle.checked : true,
       updatedAt: serverTimestamp()
     };
 
@@ -481,13 +542,16 @@ async function initAdminView() {
       panel.hidden = false;
       if (newLunchSection) newLunchSection.hidden = false;
       if (editSection) editSection.hidden = false;
+      if (pricingSection) pricingSection.hidden = false;
       if (closedSection) closedSection.hidden = false;
       await applySelectionsToForm(selects, weekPicker.value);
       await syncClosedState(closedPersistentCheckbox, closedCheckbox, closedMessage);
+      await populatePricingForm();
     } else {
       panel.hidden = true;
       if (newLunchSection) newLunchSection.hidden = true;
       if (editSection) editSection.hidden = true;
+      if (pricingSection) pricingSection.hidden = true;
       if (closedSection) closedSection.hidden = true;
       loginSection.hidden = false;
       resetEditForm("Logga in för att redigera luncher.");
@@ -534,13 +598,15 @@ async function initAdminView() {
     const title = document.getElementById("lunch-title").value.trim();
     const detail = document.getElementById("lunch-detail").value.trim();
     const allergens = document.getElementById("lunch-allergens").value.trim();
+    const showSeniorPrice = newLunchSeniorToggle ? newLunchSeniorToggle.checked : true;
     if (!title || !detail) return;
 
     const newEntry = normalizeLunch({
       id: `${slugify(title)}-${Date.now().toString(36)}`,
       title,
       detail,
-      allergens
+      allergens,
+      showSeniorPrice
     });
 
     try {
@@ -548,12 +614,14 @@ async function initAdminView() {
         title: newEntry.title,
         detail: newEntry.detail,
         allergens: newEntry.allergens,
+        showSeniorPrice: newEntry.showSeniorPrice,
         createdAt: serverTimestamp()
       });
       lunchesCache = null;
       await populateSelectOptions(selects, true);
       await populateEditSelect(editSelect, true);
       newLunchForm.reset();
+      if (newLunchSeniorToggle) newLunchSeniorToggle.checked = true;
       showFeedback(newLunchFeedback);
     } catch (error) {
       console.error("Kunde inte lägga till lunch:", error);
@@ -611,18 +679,37 @@ async function syncClosedState(persistentCheckbox, todayCheckbox, messageInput) 
   }
 }
 
-function renderLunch(container, lunch) {
+function renderLunch(container, lunch, pricing) {
   container.classList.remove("placeholder");
-  container.innerHTML = `
-    <h3>${lunch.title}</h3>
-    <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-    <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
-  `;
+  container.innerHTML = buildLunchMarkup(lunch, pricing);
 }
 
 function renderPlaceholder(container, message) {
   container.classList.add("placeholder");
   container.innerHTML = `<p>${message}</p>`;
+}
+
+function buildLunchMarkup(lunch, pricing) {
+  const regularPrice = pricing?.regularPrice?.trim();
+  const seniorPrice = pricing?.seniorPrice?.trim();
+  const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
+  const priceHtml = regularPrice
+    ? `<div class="menu-price">
+        <span class="price">${regularPrice}</span>
+        ${showSenior ? `<span class="senior">Pensionär: ${seniorPrice}</span>` : ""}
+      </div>`
+    : "";
+
+  return `
+    <div class="menu-row">
+      <div class="menu-info">
+        <h3>${lunch.title}</h3>
+        <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
+      </div>
+      ${priceHtml}
+    </div>
+  `;
 }
 
 function getTodayDayKey() {
