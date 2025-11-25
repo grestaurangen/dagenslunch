@@ -261,8 +261,14 @@ async function renderTodayView() {
 
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
-    renderLunch(container, lunch, pricing);
-    loadInstagramEmbeds(container);
+    renderLunch(container, lunch, pricing, true);
+    // Instagram embeds are loaded by the platform script automatically
+    // Process embeds after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      if (window.instgrm && window.instgrm.Embeds) {
+        window.instgrm.Embeds.process();
+      }
+    }, 100);
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -312,9 +318,13 @@ async function renderWeeklyView() {
           const lunch = lunches.find(item => item.id === lunchId);
           if (lunch) {
             content.innerHTML = buildLunchMarkup(lunch, pricing);
-            if (lunch.instagramUrl) {
-              loadInstagramPreviewAsync(content, lunch.instagramUrl);
-            }
+            // Instagram embeds are loaded by the platform script automatically
+            // Process embeds after a short delay to ensure DOM is ready
+            setTimeout(() => {
+              if (window.instgrm && window.instgrm.Embeds) {
+                window.instgrm.Embeds.process();
+              }
+            }, 100);
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -738,9 +748,9 @@ async function syncClosedState(persistentCheckbox, todayCheckbox, messageInput) 
   }
 }
 
-function renderLunch(container, lunch, pricing) {
+function renderLunch(container, lunch, pricing, isTodayView = false) {
   container.classList.remove("placeholder");
-  container.innerHTML = buildLunchMarkup(lunch, pricing);
+  container.innerHTML = buildLunchMarkup(lunch, pricing, isTodayView);
 }
 
 function renderPlaceholder(container, message) {
@@ -748,54 +758,21 @@ function renderPlaceholder(container, message) {
   container.innerHTML = `<p>${message}</p>`;
 }
 
-function getInstagramImageUrl(instagramUrl) {
-  if (!instagramUrl) return null;
-  
-  try {
-    const urlObj = new URL(instagramUrl);
-    const pathMatch = urlObj.pathname.match(/\/p\/([A-Za-z0-9_-]+)/);
-    if (pathMatch && pathMatch[1]) {
-      const postShortcode = pathMatch[1];
-      return `https://www.instagram.com/p/${postShortcode}/media/?size=m`;
-    }
-  } catch (error) {
-    console.warn("Kunde inte extrahera bild från Instagram-URL:", error);
-  }
-  return null;
-}
 
-async function loadInstagramPreviewAsync(container, instagramUrl) {
-  const imgElement = container?.querySelector(".menu-image img");
-  if (!imgElement) return;
-
-  try {
-    const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(instagramUrl)}`;
-    const response = await fetch(oembedUrl);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.thumbnail_url) {
-        imgElement.src = data.thumbnail_url;
-      }
-    }
-  } catch (error) {
-    console.warn("Kunde inte hämta Instagram-förhandsvisning via oEmbed:", error);
-  }
-}
-
-function buildLunchMarkup(lunch, pricing) {
+function buildLunchMarkup(lunch, pricing, isTodayView = false) {
   const regularPrice = pricing?.regularPrice?.trim();
   const seniorPrice = pricing?.seniorPrice?.trim();
   const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
   const priceHtml = regularPrice
     ? `<div class="menu-price">
-        <span class="price"><span class="price-label"> </span> ${regularPrice}</span>
+        <span class="price"><span class="price-label">Pris:</span> ${regularPrice}</span>
         ${showSenior ? `<span class="senior"><span class="price-label">Pensionärspris:</span> ${seniorPrice}</span>` : ""}
       </div>`
     : "";
 
   const instagramUrl = lunch.instagramUrl?.trim();
-  const instagramEmbed = instagramUrl
-    ? `<div class="instagram-embed instagram-embed--inline">
+  const instagramPreview = instagramUrl
+    ? `<div class="menu-instagram-preview">
         <blockquote
           class="instagram-media"
           data-instgrm-permalink="${instagramUrl}"
@@ -803,22 +780,46 @@ function buildLunchMarkup(lunch, pricing) {
           style="
             background: #fff;
             border: 0;
-            border-radius: 3px;
-            box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.5), 0 1px 10px 0 rgba(0, 0, 0, 0.15);
-            margin: 1px;
-            max-width: 658px;
-            min-width: 326px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 0;
+            max-width: 200px;
+            min-width: 150px;
             padding: 0;
-            width: calc(100% - 2px);
+            width: 100%;
+            transform: scale(0.3);
+            transform-origin: top left;
           "
         ></blockquote>
+        <div style="padding-bottom: 30%;"></div>
       </div>`
     : "";
 
+  if (isTodayView) {
+    return `
+      <div class="menu-lunch-header">
+        <h2>Dagens lunch</h2>
+      </div>
+      <div class="menu-lunch-separator"></div>
+      <div class="menu-lunch-content">
+        <div class="menu-lunch-image">
+          ${instagramPreview || ""}
+        </div>
+        <div class="menu-lunch-info">
+          <h3>${lunch.title}</h3>
+          <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+          ${priceHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Weekly view - original structure
   return `
     <div class="menu-row">
       <div class="menu-info">
-        ${instagramEmbed}
+        ${instagramPreview}
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
         <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
