@@ -5,13 +5,14 @@ En enkel statisk webbapp som visar dagens lunch och en hel veckovy, samt ett adm
 ## Struktur
 - `index.html` – Publik startsida med dagens lunch.
 - `weekly.html` – Publik vy över hela veckan (med veckoväljare).
-- `x7k9m2p4.html` – Enkel adminpanel (lösenordsskyddad på klientsidan).
+- `x7k9m2p4.html` – Adminpanel (kräver inloggning via Firebase).
 - `style.css` – Gemensamma stilmallar för alla sidor.
 - `script.js` – All logik för att läsa lunchlistan, visa menyer och hantera adminflödet.
-- `data/lunches.json` – Grunddatan med titlar, detaljer och allergener.
+- `firebaseConfig.js` – Exporterar Firebase-konfigurationen.
+- `data/lunches.json` – Reservdata om Firestore inte svarar (används endast som fallback).
 
 ## Grunddata
-`data/lunches.json` innehåller objekt med följande fält:
+`data/lunches.json` innehåller objekt med följande fält och speglar strukturen i Firestore-samlingen `lunches`:
 ```json
 {
   "id": "flaskytterfile",
@@ -20,20 +21,21 @@ En enkel statisk webbapp som visar dagens lunch och en hel veckovy, samt ett adm
   "allergens": "Glutenfri, Laktosfri"
 }
 ```
-Uppdatera filen manuellt om du vill distribuera nya standardrätter direkt i koden. Admin kan dessutom lägga till fler luncher via formuläret – de sparas i webbläsarens `localStorage`.
+Uppdatera filen om du vill ha en fallback-lista när databasen inte svarar. Alla skarpa ändringar sparas i Firestore (samlingarna `lunches` och `customLunches`).
 
 ## Adminpanel
-- Lösenordet är `grestaurang` (byt värdet `ADMIN_PIN` i `script.js`).
-- Välj en vecka via rullistan (visar föregående veckor + endast en vecka framåt) och koppla sedan rätter till måndag–fredag.
-- Klicka på **Spara vecka** för att lagra valet lokalt. Både startsidan och veckosidan hämtar samma data.
-- Lägg till nya luncher via formuläret längst ned. Dessa blir valbara direkt.
-- Adminpanelen är nu skyddad: formulären är inaktiverade tills inloggning, och sessionen sparas i `sessionStorage` (återställs när fliken stängs).
+- Logga in med ett Firebase Auth-konto (E-post/Lösenord).
+- Välj en vecka via rullistan (visar föregående vecka, aktuell vecka och nästa vecka) och koppla sedan rätter till måndag–fredag.
+- Klicka på **Spara vecka** för att skriva data till Firestore (`weekSelections/{vecka}`).
+- Lägg till nya luncher via formuläret längst ned. De sparas i `customLunches` och blir valbara direkt.
+- Aktivera **Stängd idag** eller **Stängt tillsvidare** för att skriva till Firestore (`closedOverrides/{datum}` respektive `flags/persistentClosed`). Dessa meddelanden ersätter helt dagens lunch på startsidan.
 
-> **Säkerhetsvarning:** Lösenordet finns fortfarande i klientkoden (`script.js`) och kan ses av någon som visar källkoden. För riktig säkerhet behöver du implementera serverless-funktioner (se nedan) eller ett riktigt backend-API. `api/`-mappen innehåller platshållare för Vercel serverless-funktioner som du kan implementera senare.
+> **Obs:** All publik data (luncher, veckomenyer, stängningsmeddelanden) läses nu från Firestore. Den statiska JSON-filen används endast om databasen inte går att nå.
 
 ## Veckovy
 - På `weekly.html` kan besökare byta vecka med samma begränsade rullista (historik + en vecka framåt) för att förhandsgranska planerade menyer. Vy defaultar till nuvarande vecka.
 
 ## Publicering
-1. Publicera filerna på valfri statisk webbhotell (GitHub Pages, Netlify, Vercel osv).
-2. Säkerställ att `data/lunches.json` går att hämta via HTTP(S). Lokalt krävs en enkel utvecklingsserver (t.ex. `npx serve`), eftersom `fetch` mot `file://` blockeras av säkerhetsskäl.
+1. Publicera filerna på valfri statisk hosting (GitHub Pages, Netlify, Vercel osv). Filen `firebaseConfig.js` måste innehålla projektets publika nycklar.
+2. Firestore och Authentication måste vara aktiverade i Firebase-projektet. Se till att säkerhetsreglerna endast tillåter skrivningar för inloggade användare.
+3. För lokal utveckling krävs en enkel server (t.ex. `npx serve`) eftersom `fetch` mot `file://` blockeras och Firebase-moduler behöver laddas över http/https.
