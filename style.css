@@ -279,6 +279,18 @@ main {
 
 .menu-info {
   flex: 1 1 220px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.menu-media {
+  flex: 0 0 clamp(140px, 30%, 220px);
+  max-width: clamp(140px, 30%, 220px);
+}
+
+.menu-copy {
+  flex: 1 1 auto;
 }
 
 .menu-image {
@@ -306,9 +318,9 @@ main {
 }
 
 .menu-instagram-preview {
-  margin-bottom: 0.75rem;
-  width: 30%;
-  max-width: 200px;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 100%;
   position: relative;
   overflow: hidden;
   height: 0;
@@ -696,5 +708,14 @@ footer {
 
   .card {
     overflow: hidden;
+  }
+
+  .menu-info {
+    flex-direction: column;
+  }
+
+  .menu-media {
+    width: 100%;
+    max-width: 240px;
   }
 }

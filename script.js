@@ -798,10 +798,12 @@ function buildLunchMarkup(lunch, pricing) {
   return `
     <div class="menu-row">
       <div class="menu-info">
-        ${instagramPreview}
-        <h3>${lunch.title}</h3>
-        <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+        ${instagramPreview ? `<div class="menu-media">${instagramPreview}</div>` : ""}
+        <div class="menu-copy">
+          <h3>${lunch.title}</h3>
+          <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+        </div>
       </div>
       ${priceHtml}
     </div>
