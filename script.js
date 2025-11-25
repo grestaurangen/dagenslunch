@@ -262,9 +262,13 @@ async function renderTodayView() {
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
     renderLunch(container, lunch, pricing);
-    if (lunch.instagramUrl) {
-      loadInstagramPreview(container, lunch.instagramUrl);
-    }
+    // Instagram embeds are loaded by the platform script automatically
+    // Process embeds after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      if (window.instgrm && window.instgrm.Embeds) {
+        window.instgrm.Embeds.process();
+      }
+    }, 100);
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -314,9 +318,13 @@ async function renderWeeklyView() {
           const lunch = lunches.find(item => item.id === lunchId);
           if (lunch) {
             content.innerHTML = buildLunchMarkup(lunch, pricing);
-            if (lunch.instagramUrl) {
-              loadInstagramPreview(content, lunch.instagramUrl);
-            }
+            // Instagram embeds are loaded by the platform script automatically
+            // Process embeds after a short delay to ensure DOM is ready
+            setTimeout(() => {
+              if (window.instgrm && window.instgrm.Embeds) {
+                window.instgrm.Embeds.process();
+              }
+            }, 100);
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -750,59 +758,6 @@ function renderPlaceholder(container, message) {
   container.innerHTML = `<p>${message}</p>`;
 }
 
-function getInstagramImageUrl(instagramUrl) {
-  if (!instagramUrl) return null;
-  
-  try {
-    const urlObj = new URL(instagramUrl);
-    const pathMatch = urlObj.pathname.match(/\/p\/([A-Za-z0-9_-]+)/);
-    if (pathMatch && pathMatch[1]) {
-      const postShortcode = pathMatch[1];
-      return `https://www.instagram.com/p/${postShortcode}/media/?size=m`;
-    }
-  } catch (error) {
-    console.warn("Kunde inte extrahera bild från Instagram-URL:", error);
-  }
-  return null;
-}
-
-async function loadInstagramPreview(container, instagramUrl) {
-  if (!container || !instagramUrl) return;
-  
-  const imgElement = container.querySelector(".instagram-preview-img");
-  if (!imgElement) return;
-
-  try {
-    // Extract post shortcode from URL
-    const urlMatch = instagramUrl.match(/\/p\/([A-Za-z0-9_-]+)/);
-    if (!urlMatch) return;
-    
-    const shortcode = urlMatch[1];
-    
-    // Use oEmbed API to get thumbnail
-    const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(instagramUrl)}&omitscript=true`;
-    const response = await fetch(oembedUrl);
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.thumbnail_url) {
-        imgElement.src = data.thumbnail_url;
-        imgElement.alt = data.title || "Instagram preview";
-        return;
-      }
-    }
-    
-    // Fallback: construct media URL (may not always work due to Instagram restrictions)
-    imgElement.src = `https://www.instagram.com/p/${shortcode}/media/?size=m`;
-  } catch (error) {
-    console.warn("Kunde inte hämta Instagram-förhandsvisning:", error);
-    // Hide the preview if we can't load it
-    const previewContainer = container.querySelector(".menu-instagram-preview");
-    if (previewContainer) {
-      previewContainer.style.display = "none";
-    }
-  }
-}
 
 function buildLunchMarkup(lunch, pricing) {
   const regularPrice = pricing?.regularPrice?.trim();
@@ -818,9 +773,25 @@ function buildLunchMarkup(lunch, pricing) {
   const instagramUrl = lunch.instagramUrl?.trim();
   const instagramPreview = instagramUrl
     ? `<div class="menu-instagram-preview">
-        <a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" class="instagram-preview-link" data-instagram-url="${instagramUrl}">
-          <img src="" alt="Instagram preview" class="instagram-preview-img" loading="lazy" />
-        </a>
+        <blockquote
+          class="instagram-media"
+          data-instgrm-permalink="${instagramUrl}"
+          data-instgrm-version="14"
+          style="
+            background: #fff;
+            border: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 0;
+            max-width: 200px;
+            min-width: 150px;
+            padding: 0;
+            width: 100%;
+            transform: scale(0.3);
+            transform-origin: top left;
+          "
+        ></blockquote>
+        <div style="padding-bottom: 30%;"></div>
       </div>`
     : "";
 
