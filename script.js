@@ -259,6 +259,13 @@ async function renderWeeklyView() {
     const weekKey = toWeekKey(weekValue);
     const lunches = await getAllLunches();
     const selections = await fetchWeekSelection(weekKey);
+    const [persistentClosed, todayClosed] = await Promise.all([
+      fetchPersistentClosed(),
+      fetchTodayClosed()
+    ]);
+    const currentWeekValue = formatWeekInputValue(new Date());
+    const weekIsCurrent = weekValue === currentWeekValue;
+    const todayKey = getTodayDayKey();
     section.innerHTML = "";
 
     WEEKDAYS.forEach(dayKey => {
@@ -268,20 +275,26 @@ async function renderWeeklyView() {
       heading.textContent = WEEKDAY_LABELS[dayKey];
       const content = document.createElement("div");
 
-      const lunchId = selections?.[dayKey];
-      if (lunchId) {
-        const lunch = lunches.find(item => item.id === lunchId);
-        if (lunch) {
-          content.innerHTML = `
-            <p class="menu-detail"><strong>${lunch.title}</strong></p>
-            <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-            <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
-          `;
-        } else {
-          content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
-        }
+      if (persistentClosed?.isClosed) {
+        content.innerHTML = `<p class="placeholder">${persistentClosed.message || "Restaurangen är stängd tillsvidare."}</p>`;
+      } else if (weekIsCurrent && todayClosed?.isClosed && dayKey === todayKey) {
+        content.innerHTML = `<p class="placeholder">${todayClosed.message || "Restaurangen är stängd idag."}</p>`;
       } else {
-        content.innerHTML = `<p class="placeholder">Ingen lunch vald ännu.</p>`;
+        const lunchId = selections?.[dayKey];
+        if (lunchId) {
+          const lunch = lunches.find(item => item.id === lunchId);
+          if (lunch) {
+            content.innerHTML = `
+              <p class="menu-detail"><strong>${lunch.title}</strong></p>
+              <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+              <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas."}</p>
+            `;
+          } else {
+            content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
+          }
+        } else {
+          content.innerHTML = `<p class="placeholder">Ingen lunch vald ännu.</p>`;
+        }
       }
 
       card.appendChild(heading);
