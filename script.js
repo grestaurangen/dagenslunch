@@ -771,8 +771,11 @@ function buildLunchMarkup(lunch, pricing, isTodayView = false) {
     : "";
 
   const instagramUrl = lunch.instagramUrl?.trim();
+  const previewClass = isTodayView
+    ? "menu-instagram-preview menu-instagram-preview--zoomed"
+    : "menu-instagram-preview";
   const instagramPreview = instagramUrl
-    ? `<div class="menu-instagram-preview">
+    ? `<div class="${previewClass}">
         <blockquote
           class="instagram-media"
           data-instgrm-permalink="${instagramUrl}"
@@ -797,14 +800,13 @@ function buildLunchMarkup(lunch, pricing, isTodayView = false) {
 
   if (isTodayView) {
     return `
-      <div class="menu-lunch-top">
-        <div>
+      <div class="menu-lunch-header">
+        <div class="menu-header-title">
           <h2>Dagens lunch</h2>
         </div>
-        <div class="menu-lunch-info-block">
+        <div class="menu-header-info">
           <h3>${lunch.title}</h3>
           <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
           ${priceHtml}
         </div>
       </div>
@@ -813,7 +815,9 @@ function buildLunchMarkup(lunch, pricing, isTodayView = false) {
         <div class="menu-lunch-image">
           ${instagramPreview || ""}
         </div>
-        <div class="menu-lunch-spacer"></div>
+        <div class="menu-lunch-info">
+          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+        </div>
       </div>
     `;
   }

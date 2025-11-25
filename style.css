@@ -283,12 +283,25 @@ main {
 
 .menu-lunch-header {
   padding-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 0.9em;
 }
 
-.menu-lunch-header h2 {
+.menu-header-title h2 {
   margin: 0;
   font-size: 1.5rem;
   color: #111927;
+}
+
+.menu-header-info {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .menu-lunch-separator {
@@ -301,11 +314,17 @@ main {
   display: flex;
   gap: 1.5rem;
   align-items: flex-start;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 1.25rem;
 }
 
 .menu-lunch-image {
   flex: 0 0 30%;
   max-width: 30%;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 1rem;
+  margin-right: 1rem;
 }
 
 .menu-lunch-info {
@@ -313,6 +332,7 @@ main {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .menu-image {
@@ -342,8 +362,8 @@ main {
 .menu-instagram-preview {
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
   border-radius: 12px;
+  overflow: hidden;
 }
 
 .menu-instagram-preview blockquote {
@@ -356,6 +376,28 @@ main {
 .menu-instagram-preview iframe {
   width: 100% !important;
   max-width: 100% !important;
+}
+
+.menu-instagram-preview--zoomed {
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+.menu-instagram-preview--zoomed blockquote,
+.menu-instagram-preview--zoomed iframe {
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.menu-instagram-preview--zoomed iframe {
+  transform: scale(3);
+  transform-origin: center;
 }
 
 .menu-card h3 {
@@ -724,14 +766,19 @@ footer {
 
   .menu-lunch-content {
     flex-direction: column;
+    border: 1px solid #e5e7eb;
   }
 
   .menu-lunch-image {
     flex: 0 0 100%;
     max-width: 100%;
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
   }
 
   .menu-lunch-info {
     flex: 1 1 100%;
+    padding-top: 1rem;
   }
 }
