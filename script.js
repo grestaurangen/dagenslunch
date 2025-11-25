@@ -705,7 +705,7 @@ function buildLunchMarkup(lunch, pricing) {
       <div class="menu-info">
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. Kontakta oss vid funderingar."}</p>
       </div>
       ${priceHtml}
     </div>
@@ -896,4 +896,5 @@ function openDirections() {
     : `https://www.google.com/maps/dir/?api=1&destination=${address}`;
   window.open(url, "_blank");
 }
+
 
