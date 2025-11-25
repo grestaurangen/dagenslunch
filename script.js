@@ -797,20 +797,23 @@ function buildLunchMarkup(lunch, pricing, isTodayView = false) {
 
   if (isTodayView) {
     return `
-      <div class="menu-lunch-header">
-        <h2>Dagens lunch</h2>
+      <div class="menu-lunch-top">
+        <div>
+          <h2>Dagens lunch</h2>
+        </div>
+        <div class="menu-lunch-info-block">
+          <h3>${lunch.title}</h3>
+          <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+          ${priceHtml}
+        </div>
       </div>
       <div class="menu-lunch-separator"></div>
       <div class="menu-lunch-content">
         <div class="menu-lunch-image">
           ${instagramPreview || ""}
         </div>
-        <div class="menu-lunch-info">
-          <h3>${lunch.title}</h3>
-          <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
-          ${priceHtml}
-        </div>
+        <div class="menu-lunch-spacer"></div>
       </div>
     `;
   }
