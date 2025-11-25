@@ -262,7 +262,9 @@ async function renderTodayView() {
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
     renderLunch(container, lunch, pricing);
-    loadInstagramEmbeds(container);
+    if (lunch.instagramUrl) {
+      loadInstagramPreview(container, lunch.instagramUrl);
+    }
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -313,7 +315,7 @@ async function renderWeeklyView() {
           if (lunch) {
             content.innerHTML = buildLunchMarkup(lunch, pricing);
             if (lunch.instagramUrl) {
-              loadInstagramPreviewAsync(content, lunch.instagramUrl);
+              loadInstagramPreview(content, lunch.instagramUrl);
             }
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
@@ -764,21 +766,41 @@ function getInstagramImageUrl(instagramUrl) {
   return null;
 }
 
-async function loadInstagramPreviewAsync(container, instagramUrl) {
-  const imgElement = container?.querySelector(".menu-image img");
+async function loadInstagramPreview(container, instagramUrl) {
+  if (!container || !instagramUrl) return;
+  
+  const imgElement = container.querySelector(".instagram-preview-img");
   if (!imgElement) return;
 
   try {
-    const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(instagramUrl)}`;
+    // Extract post shortcode from URL
+    const urlMatch = instagramUrl.match(/\/p\/([A-Za-z0-9_-]+)/);
+    if (!urlMatch) return;
+    
+    const shortcode = urlMatch[1];
+    
+    // Use oEmbed API to get thumbnail
+    const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(instagramUrl)}&omitscript=true`;
     const response = await fetch(oembedUrl);
+    
     if (response.ok) {
       const data = await response.json();
       if (data.thumbnail_url) {
         imgElement.src = data.thumbnail_url;
+        imgElement.alt = data.title || "Instagram preview";
+        return;
       }
     }
+    
+    // Fallback: construct media URL (may not always work due to Instagram restrictions)
+    imgElement.src = `https://www.instagram.com/p/${shortcode}/media/?size=m`;
   } catch (error) {
-    console.warn("Kunde inte hämta Instagram-förhandsvisning via oEmbed:", error);
+    console.warn("Kunde inte hämta Instagram-förhandsvisning:", error);
+    // Hide the preview if we can't load it
+    const previewContainer = container.querySelector(".menu-instagram-preview");
+    if (previewContainer) {
+      previewContainer.style.display = "none";
+    }
   }
 }
 
@@ -794,31 +816,18 @@ function buildLunchMarkup(lunch, pricing) {
     : "";
 
   const instagramUrl = lunch.instagramUrl?.trim();
-  const instagramEmbed = instagramUrl
-    ? `<div class="menu-instagram-embed">
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="${instagramUrl}"
-          data-instgrm-version="14"
-          style="
-            background: #fff;
-            border: 0;
-            border-radius: 3px;
-            box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.5), 0 1px 10px 0 rgba(0, 0, 0, 0.15);
-            margin: 1px;
-            max-width: 658px;
-            min-width: 326px;
-            padding: 0;
-            width: calc(100% - 2px);
-          "
-        ></blockquote>
+  const instagramPreview = instagramUrl
+    ? `<div class="menu-instagram-preview">
+        <a href="${instagramUrl}" target="_blank" rel="noopener noreferrer" class="instagram-preview-link" data-instagram-url="${instagramUrl}">
+          <img src="" alt="Instagram preview" class="instagram-preview-img" loading="lazy" />
+        </a>
       </div>`
     : "";
 
   return `
     <div class="menu-row">
       <div class="menu-info">
-        ${instagramEmbed}
+        ${instagramPreview}
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
         <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
