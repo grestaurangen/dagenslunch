@@ -198,17 +198,21 @@ main {
 }
 
 .instagram-embed {
-  width: 100%;
+  width: calc(100% + 3rem);
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
   overflow: hidden;
   position: relative;
+  border-radius: 0 0 16px 16px;
 }
 
 .instagram-embed blockquote {
-  margin: 0 auto;
+  margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box;
+  border-radius: 0 0 16px 16px !important;
 }
 
 .instagram-embed iframe {
@@ -634,8 +638,11 @@ footer {
   }
 
   .instagram-embed {
+    width: calc(100% + 3rem);
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
     overflow: hidden;
-    max-width: 100%;
+    max-width: none;
   }
 
   .instagram-embed blockquote {
