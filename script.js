@@ -261,7 +261,7 @@ async function renderTodayView() {
 
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
-    renderLunch(container, lunch, pricing);
+    renderLunch(container, lunch, pricing, true);
     // Instagram embeds are loaded by the platform script automatically
     // Process embeds after a short delay to ensure DOM is ready
     setTimeout(() => {
@@ -748,9 +748,9 @@ async function syncClosedState(persistentCheckbox, todayCheckbox, messageInput) 
   }
 }
 
-function renderLunch(container, lunch, pricing) {
+function renderLunch(container, lunch, pricing, isTodayView = false) {
   container.classList.remove("placeholder");
-  container.innerHTML = buildLunchMarkup(lunch, pricing);
+  container.innerHTML = buildLunchMarkup(lunch, pricing, isTodayView);
 }
 
 function renderPlaceholder(container, message) {
@@ -759,7 +759,7 @@ function renderPlaceholder(container, message) {
 }
 
 
-function buildLunchMarkup(lunch, pricing) {
+function buildLunchMarkup(lunch, pricing, isTodayView = false) {
   const regularPrice = pricing?.regularPrice?.trim();
   const seniorPrice = pricing?.seniorPrice?.trim();
   const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
@@ -795,23 +795,36 @@ function buildLunchMarkup(lunch, pricing) {
       </div>`
     : "";
 
-  return `
-    <div class="menu-row ${instagramPreview ? "has-preview" : ""}">
-      ${
-        instagramPreview
-          ? `<section class="card menu-card preview-card">
-              ${instagramPreview}
-            </section>`
-          : ""
-      }
-      <section class="card menu-card info-card">
-        <div class="menu-copy">
+  if (isTodayView) {
+    return `
+      <div class="menu-lunch-header">
+        <h2>Dagens lunch</h2>
+      </div>
+      <div class="menu-lunch-separator"></div>
+      <div class="menu-lunch-content">
+        <div class="menu-lunch-image">
+          ${instagramPreview || ""}
+        </div>
+        <div class="menu-lunch-info">
           <h3>${lunch.title}</h3>
           <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
           <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+          ${priceHtml}
         </div>
-        ${priceHtml}
-      </section>
+      </div>
+    `;
+  }
+
+  // Weekly view - original structure
+  return `
+    <div class="menu-row">
+      <div class="menu-info">
+        ${instagramPreview}
+        <h3>${lunch.title}</h3>
+        <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
+        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
+      </div>
+      ${priceHtml}
     </div>
   `;
 }
