@@ -34,8 +34,8 @@ const RESTAURANT_ADDRESS = "Rönnbäcken 12, 931 92 Skellefteå";
 
 let lunchesCache = null;
 const selectionCache = {};
-let persistentClosedCache = undefined;
-let todayClosedCache = undefined;
+let persistentClosedCache;
+let todayClosedCache;
 
 document.addEventListener("DOMContentLoaded", () => {
   initPage();
@@ -54,6 +54,15 @@ async function initPage() {
   } else if (page === "admin") {
     await initAdminView();
   }
+}
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || `lunch-${Date.now()}`;
 }
 
 function normalizeLunch(lunch) {
@@ -75,12 +84,12 @@ async function getAllLunches(force = false) {
       getDocs(collection(db, "customLunches"))
     ]);
 
-    const base = baseSnap.docs.map(item => normalizeLunch({ id: item.id, ...item.data() }));
-    const custom = customSnap.docs.map(item => normalizeLunch({ id: item.id, ...item.data() }));
-    const combined = [...base, ...custom];
+    const base = baseSnap.docs.map(docSnap => normalizeLunch({ id: docSnap.id, ...docSnap.data() }));
+    const custom = customSnap.docs.map(docSnap => normalizeLunch({ id: docSnap.id, ...docSnap.data() }));
+    const merged = [...base, ...custom];
 
-    if (combined.length) {
-      lunchesCache = combined;
+    if (merged.length) {
+      lunchesCache = merged;
       return lunchesCache;
     }
   } catch (error) {
@@ -119,18 +128,12 @@ async function fetchWeekSelection(weekKey, force = false) {
 
 async function saveWeekSelection(weekKey, payload) {
   if (!weekKey) return;
-  try {
-    await setDoc(doc(db, "weekSelections", weekKey), payload);
-    selectionCache[weekKey] = payload;
-  } catch (error) {
-    console.error("Kunde inte spara veckoval:", error);
-    throw error;
-  }
+  await setDoc(doc(db, "weekSelections", weekKey), payload);
+  selectionCache[weekKey] = payload;
 }
 
 function getTodayDateKey() {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 async function fetchPersistentClosed(force = false) {
@@ -156,11 +159,7 @@ async function savePersistentClosed(isClosed, message) {
     });
     persistentClosedCache = { isClosed: true, message };
   } else {
-    try {
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.warn("Ingen tillsvidare-stängning att ta bort:", error.message);
-    }
+    await deleteDoc(docRef).catch(() => {});
     persistentClosedCache = null;
   }
 }
@@ -191,11 +190,7 @@ async function saveTodayClosed(message) {
 
 async function clearTodayClosed() {
   const dateKey = getTodayDateKey();
-  try {
-    await deleteDoc(doc(db, "closedOverrides", dateKey));
-  } catch (error) {
-    console.warn("Ingen dagens stängning att ta bort:", error.message);
-  }
+  await deleteDoc(doc(db, "closedOverrides", dateKey)).catch(() => {});
   todayClosedCache = null;
 }
 
@@ -235,7 +230,7 @@ async function renderTodayView() {
   if (lunch) {
     renderLunch(container, lunch);
   } else {
-    renderPlaceholder(container, "Den valda rätten hittades inte längre i listan.");
+    renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
 }
 
@@ -264,7 +259,6 @@ async function renderWeeklyView() {
       const heading = document.createElement("h3");
       heading.textContent = WEEKDAY_LABELS[dayKey];
       const content = document.createElement("div");
-      content.id = `${dayKey}-weekly`;
 
       const lunchId = selections?.[dayKey];
       if (lunchId) {
@@ -380,7 +374,8 @@ async function initAdminView() {
     try {
       await saveWeekSelection(weekKey, payload);
       showFeedback(weekFeedback);
-    } catch {
+    } catch (error) {
+      console.error("Kunde inte spara vecka:", error);
       alert("Det gick inte att spara veckan. Försök igen.");
     }
   });
@@ -392,7 +387,7 @@ async function initAdminView() {
   newLunchForm.addEventListener("submit", async event => {
     event.preventDefault();
     if (!auth.currentUser) {
-      alert("Du måste logga in för att lägga till nya luncher.");
+      alert("Du måste logga in för att lägga till luncher.");
       return;
     }
 
@@ -428,7 +423,7 @@ async function initAdminView() {
   closedForm.addEventListener("submit", async event => {
     event.preventDefault();
     if (!auth.currentUser) {
-      alert("Du måste logga in för att spara meddelandet.");
+      alert("Du måste logga in för att spara stängningsmeddelandet.");
       return;
     }
 
@@ -532,16 +527,15 @@ function formatWeekLabel(date) {
 
 function buildWeekOptions() {
   const today = new Date();
-  const currentWeek = new Date(today);
-  const pastWeek = new Date(today);
-  pastWeek.setDate(today.getDate() - 7);
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
+  const past = new Date(today);
+  past.setDate(today.getDate() - 7);
+  const next = new Date(today);
+  next.setDate(today.getDate() + 7);
 
   const options = [];
   const seen = new Set();
 
-  [pastWeek, currentWeek, nextWeek].forEach(date => {
+  [past, today, next].forEach(date => {
     const value = formatWeekInputValue(date);
     if (!seen.has(value)) {
       seen.add(value);
@@ -601,15 +595,6 @@ function showFeedback(element) {
   }, 2500);
 }
 
-function slugify(str) {
-  return str
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || `lunch-${Date.now()}`;
-}
-
 function initContactAndDirections() {
   const contactBtn = document.getElementById("contact-btn");
   const directionsBtn = document.getElementById("directions-btn");
@@ -662,6 +647,4 @@ function openDirections() {
     : `https://www.google.com/maps/dir/?api=1&destination=${address}`;
   window.open(url, "_blank");
 }
-
-function getIsoWeekNumber(date) {
 
