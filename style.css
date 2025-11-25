@@ -119,7 +119,7 @@ a {
 main {
   width: min(1100px, 100%);
   margin: 2rem auto;
-  padding: 0 clamp(0.3rem, 0.6vw, 0.6rem);
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -211,7 +211,6 @@ main {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  min-height: 500px !important;
   box-sizing: border-box;
   border-radius: 0 0 16px 16px !important;
 }
@@ -219,8 +218,21 @@ main {
 .instagram-embed iframe {
   max-width: 100% !important;
   width: 100% !important;
-  min-height: 500px !important;
-  height: auto !important;
+}
+
+.instagram-embed--inline {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 12px;
+}
+
+.instagram-embed--inline blockquote {
+  border-radius: 12px !important;
+}
+
+.instagram-embed--inline iframe {
+  border-radius: 12px;
 }
 
 .instagram-caption {
@@ -281,63 +293,6 @@ main {
   flex: 1 1 220px;
 }
 
-.menu-lunch-header {
-  padding-bottom: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: space-between;
-  align-items: flex-start;
-  font-size: 0.9em;
-}
-
-.menu-header-title h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #111927;
-}
-
-.menu-header-info {
-  flex: 1 1 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.menu-lunch-separator {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 1rem 0;
-}
-
-.menu-lunch-content {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 1.25rem;
-}
-
-.menu-lunch-image {
-  flex: 0 0 30%;
-  max-width: 30%;
-  border-right: 1px solid #e5e7eb;
-  padding-right: 1rem;
-  margin-right: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.menu-lunch-info {
-  flex: 1 1 70%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
 .menu-image {
   margin-bottom: 0.75rem;
 }
@@ -362,52 +317,8 @@ main {
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
 }
 
-.menu-instagram-preview {
-  width: 100%;
-  max-width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.menu-instagram-preview blockquote {
-  margin: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-}
-
-.menu-instagram-preview iframe {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-.menu-instagram-preview--zoomed {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  width: 100%;
-  max-width: 100%;
-}
-
-.menu-instagram-preview--zoomed blockquote,
-.menu-instagram-preview--zoomed iframe {
-  margin: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  height: 100% !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.menu-instagram-preview--zoomed iframe {
-  transform: scale(4);
-  transform-origin: center;
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-.menu-card h3 {
+.menu-card h3,
+.menu-info h3 {
   margin: 0;
   font-size: 1.65rem;
   color: #111927;
@@ -427,11 +338,12 @@ main {
 }
 
 .menu-price {
-  text-align: left;
-  margin-top: 0.5rem;
+  text-align: center;
+  min-width: 140px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  align-items: center;
 }
 
 .menu-price .price {
@@ -480,6 +392,10 @@ main {
   margin-top: 0;
   margin-bottom: 0.25rem;
   color: #4338ca;
+}
+
+.menu-info h3 {
+  color: #111927;
 }
 
 .stacked-form {
@@ -754,7 +670,6 @@ footer {
   .instagram-embed iframe {
     max-width: 100% !important;
     width: 100% !important;
-    min-height: 500px !important;
     height: auto !important;
   }
 
@@ -765,27 +680,5 @@ footer {
 
   .card {
     overflow: hidden;
-  }
-
-  .menu-row.has-preview {
-    flex-direction: column;
-  }
-
-  .menu-lunch-content {
-    flex-direction: column;
-    border: 1px solid #e5e7eb;
-  }
-
-  .menu-lunch-image {
-    flex: 0 0 100%;
-    max-width: 100%;
-    border-right: none;
-    padding-right: 0;
-    margin-right: 0;
-  }
-
-  .menu-lunch-info {
-    flex: 1 1 100%;
-    padding-top: 1rem;
   }
 }
