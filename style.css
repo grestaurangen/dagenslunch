@@ -325,6 +325,9 @@ main {
   border-right: 1px solid #e5e7eb;
   padding-right: 1rem;
   margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-lunch-info {
@@ -381,6 +384,8 @@ main {
 .menu-instagram-preview--zoomed {
   position: relative;
   aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 100%;
 }
 
 .menu-instagram-preview--zoomed blockquote,
@@ -396,8 +401,10 @@ main {
 }
 
 .menu-instagram-preview--zoomed iframe {
-  transform: scale(3);
+  transform: scale(4);
   transform-origin: center;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .menu-card h3 {
