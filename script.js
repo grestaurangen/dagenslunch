@@ -262,13 +262,8 @@ async function renderTodayView() {
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
     renderLunch(container, lunch, pricing);
-    // Instagram embeds are loaded by the platform script automatically
-    // Process embeds after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      if (window.instgrm && window.instgrm.Embeds) {
-        window.instgrm.Embeds.process();
-      }
-    }, 100);
+    // Render Instagram preview in the dedicated section
+    renderLunchInstagramPreview(lunch);
   } else {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
   }
@@ -318,13 +313,6 @@ async function renderWeeklyView() {
           const lunch = lunches.find(item => item.id === lunchId);
           if (lunch) {
             content.innerHTML = buildLunchMarkup(lunch, pricing);
-            // Instagram embeds are loaded by the platform script automatically
-            // Process embeds after a short delay to ensure DOM is ready
-            setTimeout(() => {
-              if (window.instgrm && window.instgrm.Embeds) {
-                window.instgrm.Embeds.process();
-              }
-            }, 100);
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -753,6 +741,46 @@ function renderLunch(container, lunch, pricing) {
   container.innerHTML = buildLunchMarkup(lunch, pricing);
 }
 
+function renderLunchInstagramPreview(lunch) {
+  const embedContainer = document.getElementById("lunch-instagram-embed");
+  const section = document.getElementById("lunch-instagram-section");
+  if (!embedContainer || !section) return;
+
+  const instagramUrl = lunch.instagramUrl?.trim();
+  if (!instagramUrl) {
+    section.style.display = "none";
+    return;
+  }
+
+  section.style.display = "flex";
+  embedContainer.innerHTML = `
+    <blockquote
+      class="instagram-media"
+      data-instgrm-permalink="${instagramUrl}"
+      data-instgrm-version="14"
+      style="
+        background: #fff;
+        border: 0;
+        border-radius: 3px;
+        box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.5), 0 1px 10px 0 rgba(0, 0, 0, 0.15);
+        margin: 1px;
+        max-width: 100%;
+        min-width: 326px;
+        padding: 0;
+        width: calc(100% - 2px);
+      "
+    ></blockquote>
+  `;
+
+  // Instagram embeds are loaded by the platform script automatically
+  // Process embeds after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    if (window.instgrm && window.instgrm.Embeds) {
+      window.instgrm.Embeds.process();
+    }
+  }, 100);
+}
+
 function renderPlaceholder(container, message) {
   container.classList.add("placeholder");
   container.innerHTML = `<p>${message}</p>`;
@@ -770,35 +798,9 @@ function buildLunchMarkup(lunch, pricing) {
       </div>`
     : "";
 
-  const instagramUrl = lunch.instagramUrl?.trim();
-  const instagramPreview = instagramUrl
-    ? `<div class="menu-instagram-preview">
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="${instagramUrl}"
-          data-instgrm-version="14"
-          style="
-            background: #fff;
-            border: 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin: 0;
-            max-width: 200px;
-            min-width: 150px;
-            padding: 0;
-            width: 100%;
-            transform: scale(0.3);
-            transform-origin: top left;
-          "
-        ></blockquote>
-        <div style="padding-bottom: 30%;"></div>
-      </div>`
-    : "";
-
   return `
     <div class="menu-row">
       <div class="menu-info">
-        ${instagramPreview}
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
         <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>

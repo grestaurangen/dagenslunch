@@ -27,8 +27,11 @@
 
   <main>
     <section class="hero">
-      <h2>Dagens lunch</h2>
-      <p>Menyn uppdateras av köket varje vecka. Saknas information? Titta igen lite senare.</p>
+      <div>
+        <h2>Dagens lunch</h2>
+        <p>Menyn uppdateras av köket varje vecka. Saknas information? Titta igen lite senare.</p>
+      </div>
+      <a class="button" href="weekly.html">Öppna veckosidan</a>
     </section>
 
     <section id="today-section" class="card">
@@ -37,12 +40,13 @@
       </div>
     </section>
 
-    <section class="card info-card">
-      <div>
-        <h3>Se hela veckan</h3>
-        <p>Planera dina besök med översikten av veckans luncher.</p>
+    <section class="card instagram-card" id="lunch-instagram-section" style="display: none;">
+      <div class="instagram-header">
+        <h3>Bild från Instagram</h3>
       </div>
-      <a class="button" href="weekly.html">Öppna veckosidan</a>
+      <div class="instagram-embed" id="lunch-instagram-embed">
+        <!-- Instagram preview will be rendered here -->
+      </div>
     </section>
 
     <section class="card instagram-card">
