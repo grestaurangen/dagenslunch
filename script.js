@@ -84,8 +84,14 @@ async function getAllLunches(force = false) {
       getDocs(collection(db, "customLunches"))
     ]);
 
-    const base = baseSnap.docs.map(docSnap => normalizeLunch({ id: docSnap.id, ...docSnap.data() }));
-    const custom = customSnap.docs.map(docSnap => normalizeLunch({ id: docSnap.id, ...docSnap.data() }));
+    const base = baseSnap.docs.map(docSnap => {
+      const normalized = normalizeLunch({ id: docSnap.id, ...docSnap.data() });
+      return { ...normalized, collection: "lunches" };
+    });
+    const custom = customSnap.docs.map(docSnap => {
+      const normalized = normalizeLunch({ id: docSnap.id, ...docSnap.data() });
+      return { ...normalized, collection: "customLunches" };
+    });
     const merged = [...base, ...custom];
 
     if (merged.length) {
@@ -101,7 +107,9 @@ async function getAllLunches(force = false) {
       const response = await fetch(DATA_URL);
       if (!response.ok) throw new Error("Kunde inte läsa lunchfilen.");
       const data = await response.json();
-      lunchesCache = Array.isArray(data) ? data.map(normalizeLunch) : [];
+      lunchesCache = Array.isArray(data)
+        ? data.map(item => ({ ...normalizeLunch(item), collection: null }))
+        : [];
     } catch (error) {
       console.error("Kunde inte läsa fallback-luncher:", error);
       lunchesCache = [];
@@ -296,6 +304,16 @@ async function initAdminView() {
   const newLunchSection = document.getElementById("new-lunch");
   const newLunchForm = document.getElementById("new-lunch-form");
   const newLunchFeedback = document.getElementById("new-lunch-feedback");
+  const editSection = document.getElementById("edit-lunch");
+  const editForm = document.getElementById("edit-lunch-form");
+  const editSelect = document.getElementById("edit-lunch-select");
+  const editTitle = document.getElementById("edit-lunch-title");
+  const editDetail = document.getElementById("edit-lunch-detail");
+  const editAllergens = document.getElementById("edit-lunch-allergens");
+  const editHelper = document.getElementById("edit-lunch-helper");
+  const editFeedback = document.getElementById("edit-lunch-feedback");
+  const editSaveBtn = document.getElementById("edit-save-btn");
+  const editDeleteBtn = document.getElementById("edit-delete-btn");
   const closedSection = document.getElementById("closed-override");
   const closedForm = document.getElementById("closed-form");
   const closedCheckbox = document.getElementById("closed-checkbox");
@@ -304,6 +322,7 @@ async function initAdminView() {
   const closedFeedback = document.getElementById("closed-feedback");
   const logoutBtn = document.getElementById("logout-btn");
   const selects = Array.from(document.querySelectorAll("select[data-day]"));
+  let currentEditLunch = null;
 
   if (!loginSection || !loginForm || !panel) return;
 
@@ -311,6 +330,21 @@ async function initAdminView() {
   const initialWeek = setInitialWeekValue(weekPicker);
   await populateSelectOptions(selects);
   await applySelectionsToForm(selects, initialWeek);
+  await populateEditSelect(editSelect);
+
+  const resetEditForm = helperMessage => {
+    if (editForm) {
+      editForm.reset();
+    }
+    currentEditLunch = null;
+    if (editHelper) {
+      editHelper.textContent = helperMessage || "";
+    }
+    if (editSaveBtn) editSaveBtn.disabled = true;
+    if (editDeleteBtn) editDeleteBtn.disabled = true;
+  };
+
+  resetEditForm("Välj en lunch för att redigera eller ta bort den.");
 
   closedPersistentCheckbox.addEventListener("change", () => {
     if (closedPersistentCheckbox.checked) {
@@ -338,19 +372,112 @@ async function initAdminView() {
     signOut(auth).catch(error => console.error("Kunde inte logga ut:", error));
   });
 
+  editSelect?.addEventListener("change", async () => {
+    if (!editSelect.value) {
+      resetEditForm("Välj en lunch för att redigera eller ta bort den.");
+      return;
+    }
+    const lunches = await getAllLunches();
+    const selected = lunches.find(item => item.id === editSelect.value);
+    currentEditLunch = selected || null;
+    if (!selected) {
+      resetEditForm("Kunde inte läsa den valda lunchen.");
+      return;
+    }
+
+    if (editTitle) editTitle.value = selected.title || "";
+    if (editDetail) editDetail.value = selected.detail || "";
+    if (editAllergens) editAllergens.value = selected.allergens || "";
+
+    const editable = Boolean(selected.collection);
+    if (editHelper) {
+      editHelper.textContent = editable
+        ? selected.collection === "customLunches"
+          ? "Källa: Egna luncher."
+          : "Källa: Grundlistan."
+        : "Denna lunch går inte att uppdatera (endast lokal fallback).";
+    }
+    if (editSaveBtn) editSaveBtn.disabled = !editable;
+    if (editDeleteBtn) editDeleteBtn.disabled = !editable;
+  });
+
+  editForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!auth.currentUser) {
+      alert("Du måste logga in för att spara ändringar.");
+      return;
+    }
+    if (!currentEditLunch || !currentEditLunch.collection) {
+      alert("Den här lunchen kan inte uppdateras.");
+      return;
+    }
+
+    const payload = {
+      title: editTitle.value.trim(),
+      detail: editDetail.value.trim(),
+      allergens: editAllergens.value.trim(),
+      updatedAt: serverTimestamp()
+    };
+
+    try {
+      await setDoc(doc(db, currentEditLunch.collection, currentEditLunch.id), payload);
+      lunchesCache = null;
+      await populateSelectOptions(selects, true);
+      await populateEditSelect(editSelect, true, currentEditLunch.id);
+      const refreshed = await getAllLunches();
+      currentEditLunch = refreshed.find(item => item.id === currentEditLunch.id) || null;
+      if (editFeedback) editFeedback.textContent = "Ändringar sparade!";
+      showFeedback(editFeedback);
+    } catch (error) {
+      console.error("Kunde inte uppdatera lunch:", error);
+      alert("Det gick inte att spara ändringarna. Försök igen.");
+    }
+  });
+
+  editDeleteBtn?.addEventListener("click", async () => {
+    if (!auth.currentUser) {
+      alert("Du måste logga in för att ta bort luncher.");
+      return;
+    }
+    if (!currentEditLunch || !currentEditLunch.collection) {
+      alert("Välj en lunch som kan tas bort.");
+      return;
+    }
+    if (!confirm("Är du säker på att du vill ta bort den här lunchen?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, currentEditLunch.collection, currentEditLunch.id));
+      lunchesCache = null;
+      await populateSelectOptions(selects, true);
+      await populateEditSelect(editSelect, true);
+      resetEditForm("Lunchen togs bort.");
+      editSelect.value = "";
+      if (editFeedback) editFeedback.textContent = "Lunchen togs bort.";
+      showFeedback(editFeedback);
+    } catch (error) {
+      console.error("Kunde inte ta bort lunch:", error);
+      alert("Det gick inte att ta bort lunchen. Försök igen.");
+    }
+  });
+
   onAuthStateChanged(auth, async user => {
     if (user) {
       loginSection.hidden = true;
       panel.hidden = false;
-      newLunchSection.hidden = false;
-      closedSection.hidden = false;
+      if (newLunchSection) newLunchSection.hidden = false;
+      if (editSection) editSection.hidden = false;
+      if (closedSection) closedSection.hidden = false;
       await applySelectionsToForm(selects, weekPicker.value);
       await syncClosedState(closedPersistentCheckbox, closedCheckbox, closedMessage);
     } else {
       panel.hidden = true;
-      newLunchSection.hidden = true;
-      closedSection.hidden = true;
+      if (newLunchSection) newLunchSection.hidden = true;
+      if (editSection) editSection.hidden = true;
+      if (closedSection) closedSection.hidden = true;
       loginSection.hidden = false;
+      resetEditForm("Logga in för att redigera luncher.");
     }
   });
 
@@ -412,6 +539,7 @@ async function initAdminView() {
       });
       lunchesCache = null;
       await populateSelectOptions(selects, true);
+      await populateEditSelect(editSelect, true);
       newLunchForm.reset();
       showFeedback(newLunchFeedback);
     } catch (error) {
@@ -576,6 +704,27 @@ async function populateSelectOptions(selects, force = false) {
       select.value = currentValue;
     }
   });
+}
+
+async function populateEditSelect(select, force = false, selectedId) {
+  if (!select) return;
+  const lunches = await getAllLunches(force);
+  const options = [
+    "<option value=''>— Välj lunch att redigera —</option>",
+    ...lunches.map(lunch => {
+      const labelSuffix =
+        lunch.collection === "customLunches"
+          ? " (Egen)"
+          : lunch.collection === "lunches"
+            ? " (Grund)"
+            : " (Endast lokal)";
+      return `<option value="${lunch.id}">${lunch.title}${labelSuffix}</option>`;
+    })
+  ];
+  select.innerHTML = options.join("");
+  if (selectedId) {
+    select.value = selectedId;
+  }
 }
 
 async function applySelectionsToForm(selects, weekValue) {

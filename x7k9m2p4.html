@@ -78,6 +78,33 @@
       </form>
     </section>
 
+    <section id="edit-lunch" class="card" hidden>
+      <h2>Redigera befintlig lunch</h2>
+      <p>Välj en lunch från listan för att uppdatera eller ta bort den.</p>
+      <form id="edit-lunch-form" class="stacked-form">
+        <label for="edit-lunch-select">Välj lunch</label>
+        <select id="edit-lunch-select">
+          <option value="">— Välj lunch att redigera —</option>
+        </select>
+        <p id="edit-lunch-helper" class="helper-text"></p>
+
+        <label for="edit-lunch-title">Titel</label>
+        <input id="edit-lunch-title" required />
+
+        <label for="edit-lunch-detail">Detaljer</label>
+        <textarea id="edit-lunch-detail" rows="2" required></textarea>
+
+        <label for="edit-lunch-allergens">Allergen info</label>
+        <input id="edit-lunch-allergens" placeholder="t.ex. Glutenfri, Laktosfri" />
+
+        <div class="button-row">
+          <button type="submit" id="edit-save-btn" class="button secondary">Spara ändringar</button>
+          <button type="button" id="edit-delete-btn" class="button ghost">Ta bort lunch</button>
+        </div>
+        <p id="edit-lunch-feedback" class="success-text" hidden>Ändringar sparade!</p>
+      </form>
+    </section>
+
     <section id="closed-override" class="card" hidden>
       <h2>Stängd / Meddelande</h2>
       <p>När aktiverat, visar detta meddelande istället för dagens lunch på startsidan.</p>
