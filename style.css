@@ -209,6 +209,7 @@ main {
   overflow: hidden;
   position: relative;
   border-radius: 0 0 16px 16px;
+  min-height: 650px;
 }
 
 .instagram-embed blockquote {
@@ -216,7 +217,7 @@ main {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  min-height: 500px !important;
+  min-height: 650px !important;
   box-sizing: border-box;
   border-radius: 0 0 16px 16px !important;
 }
@@ -224,7 +225,7 @@ main {
 .instagram-embed iframe {
   max-width: 100% !important;
   width: 100% !important;
-  min-height: 500px !important;
+  min-height: 650px !important;
   height: auto !important;
 }
 
@@ -664,7 +665,7 @@ footer {
   .instagram-embed iframe {
     max-width: 100% !important;
     width: 100% !important;
-    min-height: 500px !important;
+    min-height: 650px !important;
     height: auto !important;
   }
 
