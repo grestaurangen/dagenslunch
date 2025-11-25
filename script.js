@@ -37,6 +37,7 @@ const selectionCache = {};
 let persistentClosedCache;
 let todayClosedCache;
 let pricingCache;
+let instagramScriptPromise;
 
 document.addEventListener("DOMContentLoaded", () => {
   initPage();
@@ -49,6 +50,7 @@ async function initPage() {
   if (page === "index") {
     await renderTodayView();
     initContactAndDirections();
+    initInstagramEmbed();
   } else if (page === "weekly") {
     await renderWeeklyView();
     initContactAndDirections();
@@ -64,6 +66,17 @@ function slugify(str) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || `lunch-${Date.now()}`;
+}
+
+function escapeHtml(str = "") {
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  };
+  return String(str).replace(/[&<>"']/g, char => map[char]);
 }
 
 function normalizeLunch(lunch) {
@@ -705,7 +718,7 @@ function buildLunchMarkup(lunch, pricing) {
       <div class="menu-info">
         <h3>${lunch.title}</h3>
         <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. Kontakta oss vid funderingar."}</p>
+        <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
       </div>
       ${priceHtml}
     </div>
@@ -897,4 +910,58 @@ function openDirections() {
   window.open(url, "_blank");
 }
 
+async function initInstagramEmbed() {
+  const container = document.getElementById("instagram-embed");
+  if (!container) return;
+
+  try {
+    const response = await fetch("/api/instagram");
+    if (!response.ok) throw new Error("Kunde inte läsa Instagram-flödet.");
+    const data = await response.json();
+    if (!data?.permalink) throw new Error("Kunde inte hitta senaste inlägget.");
+
+    const permalink = data.permalink.includes("?")
+      ? `${data.permalink}&utm_source=ig_embed&utm_campaign=loading`
+      : `${data.permalink}?utm_source=ig_embed&utm_campaign=loading`;
+
+    const captionMarkup = data.caption
+      ? `<p class="instagram-caption">${escapeHtml(data.caption)}</p>`
+      : "";
+
+    container.innerHTML = `
+      <blockquote
+        class="instagram-media"
+        data-instgrm-permalink="${permalink}"
+        data-instgrm-version="14"
+      >
+        <a href="${data.permalink}" target="_blank" rel="noopener">Visa inlägget på Instagram</a>
+      </blockquote>
+      ${captionMarkup}
+    `;
+
+    await loadInstagramEmbedScript();
+    if (window.instgrm?.Embeds?.process) {
+      window.instgrm.Embeds.process();
+    }
+  } catch (error) {
+    console.error("Instagram-integrationen misslyckades:", error);
+    container.innerHTML = `<p class="placeholder">Kunde inte hämta Instagram just nu.</p>`;
+  }
+}
+
+function loadInstagramEmbedScript() {
+  if (window.instgrm?.Embeds?.process) return Promise.resolve();
+  if (instagramScriptPromise) return instagramScriptPromise;
+
+  instagramScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://www.instagram.com/embed.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Kunde inte ladda Instagram-scriptet."));
+    document.body.appendChild(script);
+  });
+
+  return instagramScriptPromise;
+}
 
