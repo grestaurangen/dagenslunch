@@ -281,40 +281,6 @@ main {
   flex: 1 1 220px;
 }
 
-.menu-lunch-header {
-  padding-bottom: 1rem;
-}
-
-.menu-lunch-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #111927;
-}
-
-.menu-lunch-separator {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 1rem 0;
-}
-
-.menu-lunch-content {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
-}
-
-.menu-lunch-image {
-  flex: 0 0 30%;
-  max-width: 30%;
-}
-
-.menu-lunch-info {
-  flex: 1 1 70%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .menu-image {
   margin-bottom: 0.75rem;
 }
@@ -340,9 +306,9 @@ main {
 }
 
 .menu-instagram-preview {
-  margin-bottom: 0;
-  width: 100%;
-  max-width: 100%;
+  margin-bottom: 0.75rem;
+  width: 30%;
+  max-width: 200px;
   position: relative;
   overflow: hidden;
   height: 0;
@@ -366,7 +332,8 @@ main {
   display: none;
 }
 
-.menu-card h3 {
+.menu-card h3,
+.menu-info h3 {
   margin: 0;
   font-size: 1.65rem;
   color: #111927;
@@ -386,11 +353,12 @@ main {
 }
 
 .menu-price {
-  text-align: left;
-  margin-top: 0.5rem;
+  text-align: center;
+  min-width: 140px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  align-items: center;
 }
 
 .menu-price .price {
@@ -439,6 +407,10 @@ main {
   margin-top: 0;
   margin-bottom: 0.25rem;
   color: #4338ca;
+}
+
+.menu-info h3 {
+  color: #111927;
 }
 
 .stacked-form {
@@ -724,22 +696,5 @@ footer {
 
   .card {
     overflow: hidden;
-  }
-
-  .menu-row.has-preview {
-    flex-direction: column;
-  }
-
-  .menu-lunch-content {
-    flex-direction: column;
-  }
-
-  .menu-lunch-image {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-
-  .menu-lunch-info {
-    flex: 1 1 100%;
   }
 }

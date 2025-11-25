@@ -261,7 +261,7 @@ async function renderTodayView() {
 
   const lunch = lunches.find(item => item.id === lunchId);
   if (lunch) {
-    renderLunch(container, lunch, pricing, true);
+    renderLunch(container, lunch, pricing);
     // Instagram embeds are loaded by the platform script automatically
     // Process embeds after a short delay to ensure DOM is ready
     setTimeout(() => {
@@ -748,9 +748,9 @@ async function syncClosedState(persistentCheckbox, todayCheckbox, messageInput) 
   }
 }
 
-function renderLunch(container, lunch, pricing, isTodayView = false) {
+function renderLunch(container, lunch, pricing) {
   container.classList.remove("placeholder");
-  container.innerHTML = buildLunchMarkup(lunch, pricing, isTodayView);
+  container.innerHTML = buildLunchMarkup(lunch, pricing);
 }
 
 function renderPlaceholder(container, message) {
@@ -759,13 +759,13 @@ function renderPlaceholder(container, message) {
 }
 
 
-function buildLunchMarkup(lunch, pricing, isTodayView = false) {
+function buildLunchMarkup(lunch, pricing) {
   const regularPrice = pricing?.regularPrice?.trim();
   const seniorPrice = pricing?.seniorPrice?.trim();
   const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
   const priceHtml = regularPrice
     ? `<div class="menu-price">
-        <span class="price"><span class="price-label">Pris:</span> ${regularPrice}</span>
+        <span class="price"><span class="price-label"> </span> ${regularPrice}</span>
         ${showSenior ? `<span class="senior"><span class="price-label">Pensionärspris:</span> ${seniorPrice}</span>` : ""}
       </div>`
     : "";
@@ -795,27 +795,6 @@ function buildLunchMarkup(lunch, pricing, isTodayView = false) {
       </div>`
     : "";
 
-  if (isTodayView) {
-    return `
-      <div class="menu-lunch-header">
-        <h2>Dagens lunch</h2>
-      </div>
-      <div class="menu-lunch-separator"></div>
-      <div class="menu-lunch-content">
-        <div class="menu-lunch-image">
-          ${instagramPreview || ""}
-        </div>
-        <div class="menu-lunch-info">
-          <h3>${lunch.title}</h3>
-          <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
-          <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
-          ${priceHtml}
-        </div>
-      </div>
-    `;
-  }
-
-  // Weekly view - original structure
   return `
     <div class="menu-row">
       <div class="menu-info">
