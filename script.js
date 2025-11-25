@@ -765,7 +765,7 @@ function buildLunchMarkup(lunch, pricing) {
   const showSenior = lunch.showSeniorPrice !== false && Boolean(seniorPrice);
   const priceHtml = regularPrice
     ? `<div class="menu-price">
-        <span class="price"><span class="price-label"> </span> ${regularPrice}</span>
+        <span class="price"><span class="price-label">Pris:</span> ${regularPrice}</span>
         ${showSenior ? `<span class="senior"><span class="price-label">Pensionärspris:</span> ${seniorPrice}</span>` : ""}
       </div>`
     : "";
@@ -796,16 +796,22 @@ function buildLunchMarkup(lunch, pricing) {
     : "";
 
   return `
-    <div class="menu-row">
-      <div class="menu-info">
-        ${instagramPreview ? `<div class="menu-media">${instagramPreview}</div>` : ""}
+    <div class="menu-row ${instagramPreview ? "has-preview" : ""}">
+      ${
+        instagramPreview
+          ? `<section class="card menu-card preview-card">
+              ${instagramPreview}
+            </section>`
+          : ""
+      }
+      <section class="card menu-card info-card">
         <div class="menu-copy">
           <h3>${lunch.title}</h3>
           <p class="menu-detail">${lunch.detail || "Detaljer saknas."}</p>
           <p class="tagline">${lunch.allergens ? `Allergener: ${lunch.allergens}` : "Allergeninfo saknas. "}</p>
         </div>
-      </div>
-      ${priceHtml}
+        ${priceHtml}
+      </section>
     </div>
   `;
 }

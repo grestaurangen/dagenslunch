@@ -273,20 +273,23 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  align-items: stretch;
+}
+
+.menu-row.has-preview {
+  flex-wrap: nowrap;
+}
+
+.preview-card {
+  flex: 0 0 clamp(180px, 30%, 320px);
+  max-width: clamp(180px, 30%, 320px);
+  align-self: stretch;
+}
+
+.info-card {
+  flex: 1 1 0;
+  align-self: stretch;
   justify-content: space-between;
-  align-items: flex-start;
-}
-
-.menu-info {
-  flex: 1 1 220px;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.menu-media {
-  flex: 0 0 clamp(140px, 30%, 220px);
-  max-width: clamp(140px, 30%, 220px);
 }
 
 .menu-copy {
@@ -344,8 +347,7 @@ main {
   display: none;
 }
 
-.menu-card h3,
-.menu-info h3 {
+.menu-card h3 {
   margin: 0;
   font-size: 1.65rem;
   color: #111927;
@@ -419,10 +421,6 @@ main {
   margin-top: 0;
   margin-bottom: 0.25rem;
   color: #4338ca;
-}
-
-.menu-info h3 {
-  color: #111927;
 }
 
 .stacked-form {
@@ -710,12 +708,13 @@ footer {
     overflow: hidden;
   }
 
-  .menu-info {
+  .menu-row.has-preview {
     flex-direction: column;
   }
 
-  .menu-media {
+  .preview-card,
+  .info-card {
+    max-width: 100%;
     width: 100%;
-    max-width: 240px;
   }
 }
