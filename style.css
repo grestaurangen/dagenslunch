@@ -263,7 +263,6 @@ main {
 .menu-price .price-label {
   display: inline-block;
   font-size: 0.85rem;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
   color: #475467;
