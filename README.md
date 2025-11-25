@@ -1,4 +1,4 @@
-# G Restaurangen – Lunchplanerare
+Lunchplanerare
 
 En enkel statisk webbapp som visar dagens lunch och en hel veckovy, samt ett admins gränssnitt för att välja vilka rätter som ska publiceras.
 
@@ -34,8 +34,3 @@ Uppdatera filen om du vill ha en fallback-lista när databasen inte svarar. Alla
 
 ## Veckovy
 - På `weekly.html` kan besökare byta vecka med samma begränsade rullista (historik + en vecka framåt) för att förhandsgranska planerade menyer. Vy defaultar till nuvarande vecka.
-
-## Publicering
-1. Publicera filerna på valfri statisk hosting (GitHub Pages, Netlify, Vercel osv). Filen `firebaseConfig.js` måste innehålla projektets publika nycklar.
-2. Firestore och Authentication måste vara aktiverade i Firebase-projektet. Se till att säkerhetsreglerna endast tillåter skrivningar för inloggade användare.
-3. För lokal utveckling krävs en enkel server (t.ex. `npx serve`) eftersom `fetch` mot `file://` blockeras och Firebase-moduler behöver laddas över http/https.
