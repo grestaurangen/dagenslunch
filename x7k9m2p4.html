@@ -52,24 +52,59 @@
 
         <div class="weekday-grid">
           <div class="weekday-field">
-            <label for="monday-select">Måndag</label>
+            <label for="monday-select" class="weekday-label-with-checkbox">
+              <span>Måndag</span>
+              <label class="checkbox-label-inline">
+                <input type="checkbox" id="monday-extra-checkbox" data-day="monday" />
+                <span>Lägg till extra lunch</span>
+              </label>
+            </label>
             <select id="monday-select" data-day="monday"></select>
+            <select id="monday-extra-select" data-day="monday" data-extra="true" disabled style="margin-top: 0.5rem;"></select>
           </div>
           <div class="weekday-field">
-            <label for="tuesday-select">Tisdag</label>
+            <label for="tuesday-select" class="weekday-label-with-checkbox">
+              <span>Tisdag</span>
+              <label class="checkbox-label-inline">
+                <input type="checkbox" id="tuesday-extra-checkbox" data-day="tuesday" />
+                <span>Lägg till extra lunch</span>
+              </label>
+            </label>
             <select id="tuesday-select" data-day="tuesday"></select>
+            <select id="tuesday-extra-select" data-day="tuesday" data-extra="true" disabled style="margin-top: 0.5rem;"></select>
           </div>
           <div class="weekday-field">
-            <label for="wednesday-select">Onsdag</label>
+            <label for="wednesday-select" class="weekday-label-with-checkbox">
+              <span>Onsdag</span>
+              <label class="checkbox-label-inline">
+                <input type="checkbox" id="wednesday-extra-checkbox" data-day="wednesday" />
+                <span>Lägg till extra lunch</span>
+              </label>
+            </label>
             <select id="wednesday-select" data-day="wednesday"></select>
+            <select id="wednesday-extra-select" data-day="wednesday" data-extra="true" disabled style="margin-top: 0.5rem;"></select>
           </div>
           <div class="weekday-field">
-            <label for="thursday-select">Torsdag</label>
+            <label for="thursday-select" class="weekday-label-with-checkbox">
+              <span>Torsdag</span>
+              <label class="checkbox-label-inline">
+                <input type="checkbox" id="thursday-extra-checkbox" data-day="thursday" />
+                <span>Lägg till extra lunch</span>
+              </label>
+            </label>
             <select id="thursday-select" data-day="thursday"></select>
+            <select id="thursday-extra-select" data-day="thursday" data-extra="true" disabled style="margin-top: 0.5rem;"></select>
           </div>
           <div class="weekday-field">
-            <label for="friday-select">Fredag</label>
+            <label for="friday-select" class="weekday-label-with-checkbox">
+              <span>Fredag</span>
+              <label class="checkbox-label-inline">
+                <input type="checkbox" id="friday-extra-checkbox" data-day="friday" />
+                <span>Lägg till extra lunch</span>
+              </label>
+            </label>
             <select id="friday-select" data-day="friday"></select>
+            <select id="friday-extra-select" data-day="friday" data-extra="true" disabled style="margin-top: 0.5rem;"></select>
           </div>
         </div>
 

@@ -473,6 +473,27 @@ button:disabled {
   gap: 0.35rem;
 }
 
+.weekday-label-with-checkbox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checkbox-label-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-label-inline input[type="checkbox"] {
+  cursor: pointer;
+}
+
 .admin-panel {
   display: flex;
   flex-direction: column;

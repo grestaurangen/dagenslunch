@@ -252,21 +252,37 @@ async function renderTodayView() {
   const [lunches, pricing] = await Promise.all([getAllLunches(), fetchPricing()]);
   const weekKey = formatWeekInputValue(new Date());
   const selections = await fetchWeekSelection(weekKey);
-  const lunchId = selections?.[dayKey];
+  const lunchSelection = selections?.[dayKey];
 
-  if (!lunchId) {
+  if (!lunchSelection) {
     renderPlaceholder(container, "Ingen lunch har lagts upp för idag ännu.");
     return;
   }
 
-  const lunch = lunches.find(item => item.id === lunchId);
-  if (lunch) {
-    renderLunch(container, lunch, pricing);
-    // Render Instagram preview in the dedicated section
-    renderLunchInstagramPreview(lunch);
-  } else {
+  // Handle both arrays and single strings (backward compatibility)
+  const lunchIds = Array.isArray(lunchSelection) ? lunchSelection : [lunchSelection];
+  const selectedLunches = lunchIds
+    .map(id => lunches.find(item => item.id === id))
+    .filter(Boolean);
+
+  if (selectedLunches.length === 0) {
     renderPlaceholder(container, "Den valda rätten finns inte längre.");
+    return;
   }
+
+  // Render all lunches in the same container
+  container.classList.remove("placeholder");
+  container.innerHTML = selectedLunches.map(lunch => buildLunchMarkup(lunch, pricing)).join("");
+  
+  // Render Instagram preview from the first lunch (or you can choose another logic)
+  renderLunchInstagramPreview(selectedLunches[0]);
+  
+  // Process Instagram embeds after DOM update
+  setTimeout(() => {
+    if (window.instgrm && window.instgrm.Embeds) {
+      window.instgrm.Embeds.process();
+    }
+  }, 100);
 }
 
 async function renderWeeklyView() {
@@ -308,11 +324,17 @@ async function renderWeeklyView() {
       } else if (weekIsCurrent && todayClosed?.isClosed && dayKey === todayKey) {
         content.innerHTML = `<p class="placeholder">${todayClosed.message || "Restaurangen är stängd idag."}</p>`;
       } else {
-        const lunchId = selections?.[dayKey];
-        if (lunchId) {
-          const lunch = lunches.find(item => item.id === lunchId);
-          if (lunch) {
-            content.innerHTML = buildLunchMarkup(lunch, pricing);
+        const lunchSelection = selections?.[dayKey];
+        if (lunchSelection) {
+          // Handle both arrays and single strings (backward compatibility)
+          const lunchIds = Array.isArray(lunchSelection) ? lunchSelection : [lunchSelection];
+          const selectedLunches = lunchIds
+            .map(id => lunches.find(item => item.id === id))
+            .filter(Boolean);
+          
+          if (selectedLunches.length > 0) {
+            // Render all lunches in the same tile
+            content.innerHTML = selectedLunches.map(lunch => buildLunchMarkup(lunch, pricing)).join("");
           } else {
             content.innerHTML = `<p class="placeholder">Vald rätt saknas i arkivet.</p>`;
           }
@@ -325,6 +347,13 @@ async function renderWeeklyView() {
       card.appendChild(content);
       section.appendChild(card);
     });
+    
+    // Process Instagram embeds after DOM update
+    setTimeout(() => {
+      if (window.instgrm && window.instgrm.Embeds) {
+        window.instgrm.Embeds.process();
+      }
+    }, 100);
   }
 }
 
@@ -371,15 +400,17 @@ async function initAdminView() {
   const closedMessage = document.getElementById("closed-message");
   const closedFeedback = document.getElementById("closed-feedback");
   const logoutBtn = document.getElementById("logout-btn");
-  const selects = Array.from(document.querySelectorAll("select[data-day]"));
+  const selects = Array.from(document.querySelectorAll("select[data-day]:not([data-extra])"));
+  const extraSelects = Array.from(document.querySelectorAll("select[data-day][data-extra]"));
+  const extraCheckboxes = Array.from(document.querySelectorAll("input[type='checkbox'][data-day]"));
   let currentEditLunch = null;
 
   if (!loginSection || !loginForm || !panel) return;
 
   await populateWeekSelect(weekPicker);
   const initialWeek = setInitialWeekValue(weekPicker);
-  await populateSelectOptions(selects);
-  await applySelectionsToForm(selects, initialWeek);
+  await populateSelectOptions([...selects, ...extraSelects]);
+  await applySelectionsToForm(selects, extraSelects, extraCheckboxes, initialWeek);
   await populateEditSelect(editSelect);
   const populatePricingForm = async () => {
     if (!pricingForm) return;
@@ -435,6 +466,21 @@ async function initAdminView() {
       }
     });
   }
+
+  // Handle extra lunch checkboxes
+  extraCheckboxes.forEach(checkbox => {
+    const day = checkbox.dataset.day;
+    const extraSelect = extraSelects.find(sel => sel.dataset.day === day);
+    
+    checkbox.addEventListener("change", () => {
+      if (extraSelect) {
+        extraSelect.disabled = !checkbox.checked;
+        if (!checkbox.checked) {
+          extraSelect.value = "";
+        }
+      }
+    });
+  });
 
   closedPersistentCheckbox.addEventListener("change", () => {
     if (closedPersistentCheckbox.checked) {
@@ -546,7 +592,7 @@ async function initAdminView() {
     try {
       await setDoc(doc(db, currentEditLunch.collection, currentEditLunch.id), payload);
       lunchesCache = null;
-      await populateSelectOptions(selects, true);
+      await populateSelectOptions([...selects, ...extraSelects], true);
       await populateEditSelect(editSelect, true, currentEditLunch.id);
       const refreshed = await getAllLunches();
       currentEditLunch = refreshed.find(item => item.id === currentEditLunch.id) || null;
@@ -574,7 +620,7 @@ async function initAdminView() {
     try {
       await deleteDoc(doc(db, currentEditLunch.collection, currentEditLunch.id));
       lunchesCache = null;
-      await populateSelectOptions(selects, true);
+      await populateSelectOptions([...selects, ...extraSelects], true);
       await populateEditSelect(editSelect, true);
       resetEditForm("Lunchen togs bort.");
       editSelect.value = "";
@@ -594,7 +640,7 @@ async function initAdminView() {
       if (editSection) editSection.hidden = false;
       if (pricingSection) pricingSection.hidden = false;
       if (closedSection) closedSection.hidden = false;
-      await applySelectionsToForm(selects, weekPicker.value);
+      await applySelectionsToForm(selects, extraSelects, extraCheckboxes, weekPicker.value);
       await syncClosedState(closedPersistentCheckbox, closedCheckbox, closedMessage);
       await populatePricingForm();
     } else {
@@ -620,8 +666,21 @@ async function initAdminView() {
 
     const payload = {};
     selects.forEach(select => {
-      if (select.value) {
-        payload[select.dataset.day] = select.value;
+      const day = select.dataset.day;
+      const extraSelect = extraSelects.find(sel => sel.dataset.day === day);
+      const checkbox = extraCheckboxes.find(cb => cb.dataset.day === day);
+      
+      const primaryLunch = select.value;
+      const extraLunch = extraSelect && checkbox && checkbox.checked && extraSelect.value ? extraSelect.value : null;
+      
+      if (primaryLunch) {
+        if (extraLunch) {
+          // Save as array when there's an extra lunch
+          payload[day] = [primaryLunch, extraLunch];
+        } else {
+          // Save as single string for backward compatibility
+          payload[day] = primaryLunch;
+        }
       }
     });
 
@@ -635,7 +694,7 @@ async function initAdminView() {
   });
 
   weekPicker.addEventListener("change", () => {
-    applySelectionsToForm(selects, weekPicker.value);
+    applySelectionsToForm(selects, extraSelects, extraCheckboxes, weekPicker.value);
   });
 
   newLunchForm.addEventListener("submit", async event => {
@@ -673,7 +732,7 @@ async function initAdminView() {
         createdAt: serverTimestamp()
       });
       lunchesCache = null;
-      await populateSelectOptions(selects, true);
+      await populateSelectOptions([...selects, ...extraSelects], true);
       await populateEditSelect(editSelect, true);
       newLunchForm.reset();
       if (newLunchSeniorToggle) newLunchSeniorToggle.checked = true;
@@ -925,12 +984,42 @@ async function populateEditSelect(select, force = false, selectedId) {
   }
 }
 
-async function applySelectionsToForm(selects, weekValue) {
+async function applySelectionsToForm(selects, extraSelects, extraCheckboxes, weekValue) {
   const weekKey = toWeekKey(weekValue);
   const selections = await fetchWeekSelection(weekKey);
+  
   selects.forEach(select => {
     const day = select.dataset.day;
-    select.value = selections?.[day] || "";
+    const extraSelect = extraSelects.find(sel => sel.dataset.day === day);
+    const checkbox = extraCheckboxes.find(cb => cb.dataset.day === day);
+    
+    const selection = selections?.[day];
+    
+    if (Array.isArray(selection) && selection.length > 0) {
+      // Handle array (primary + extra lunch)
+      select.value = selection[0] || "";
+      if (extraSelect && checkbox) {
+        checkbox.checked = selection.length > 1 && Boolean(selection[1]);
+        extraSelect.disabled = !checkbox.checked;
+        extraSelect.value = selection[1] || "";
+      }
+    } else if (typeof selection === "string" && selection) {
+      // Handle single string (backward compatibility)
+      select.value = selection;
+      if (extraSelect && checkbox) {
+        checkbox.checked = false;
+        extraSelect.disabled = true;
+        extraSelect.value = "";
+      }
+    } else {
+      // No selection
+      select.value = "";
+      if (extraSelect && checkbox) {
+        checkbox.checked = false;
+        extraSelect.disabled = true;
+        extraSelect.value = "";
+      }
+    }
   });
 }
 
